@@ -1,0 +1,3 @@
+module.exports = {
+  'open_secrets_key': 'PUT OPEN SECRETS API KEY HERE'
+};
