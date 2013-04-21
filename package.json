@@ -1,0 +1,10 @@
+{
+  "name": "cost_of_a_vote",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "mysql": "2.0.0-alpha7",
+    "underscore": "1.4.4"
+  },
+  "engines": "node 0.8.7"
+}
