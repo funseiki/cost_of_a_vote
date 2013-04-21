@@ -1,7 +1,17 @@
-var async = require('async'),
+var _ = require('underscore'),
+    async = require('async'),
     mysql = require('mysql'),
     config = require('./config'),
     connection = null;
+
+
+/* insert_helper values are an object for which columns is the key
+ */
+function insert_helper(table, columns, values, callback) {
+  var sql = "INSERT INTO " + table + "(" + columns.join(', ') + ") VALUES (" +
+    _.map(columns, function(column) {return values[column]}).join(', ') + ");";
+  connection.query(sql, callback);
+}
 
 module.exports = {
   open: function(callback) {
@@ -55,6 +65,30 @@ module.exports = {
   },
 
   insert_candidate: function(candidate, callback) {
+    var columns = ["cid", "first_name", "last_name", "dist_id_run_for", "fec_cand_id"];
+    insert_helper("candidate", columns, candidate, callback);
+  },
+
+  insert_industry: function(industry, callback) {
+    insert_helper("industry", ["name"], industry, callback);
+  },
+
+  insert_organization: function(organization, callback) {
+    insert_helper("organization", ["name"], organization, callback);
+  },
+
+  /* insert_contribution expects a contribution object which consists of the
+   * candidate_id, the industry_id or organization_id, and the total amount
+   * (with individual and pacs amounts optional)
+   */
+  insert_contribution: function(contribution, callback) {
+    var columns = [];
+    if (industry_id in contribution) {
+      columns = ["candidate_id", "industry_id", "individual", "pacs", "total"];
+    } else {
+      columns = ["candidate_id", "organization_id", "total"];
+    }
+    insert_helper("contribution", columns, contribution, callback);
   },
 
   close: function(callback) {
