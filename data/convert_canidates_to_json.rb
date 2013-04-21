@@ -4,7 +4,7 @@ require 'json'
 candidates_txt = File.open("candidates.txt").read
 csv = CSV.new(candidates_txt, {:col_sep => ' '})
 
-columns = ["cid", "last_name", "first_name", "party", "dist_id_run_for", "fecc_and_id"]
+columns = ["cid", "last_name", "first_name", "party", "dist_id_run_for", "fec_cand_id"]
 candidates = [];
 csv.each_with_index do |row, i|
   next if i == 0
