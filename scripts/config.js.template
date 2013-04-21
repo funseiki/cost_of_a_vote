@@ -1,3 +1,4 @@
 module.exports = {
-  'open_secrets_key': 'PUT OPEN SECRETS API KEY HERE'
+  'open_secrets_key': '',
+  'mysql': {'host': '', 'user': '', 'database': ''}
 };
