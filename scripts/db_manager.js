@@ -4,15 +4,6 @@ var _ = require('underscore'),
     config = require('./config'),
     connection = null;
 
-
-/* insert_helper values are an object for which columns is the key
- */
-function insert_helper(table, columns, values, callback) {
-  var sql = "INSERT INTO " + table + "(" + columns.join(', ') + ") VALUES (" +
-    _.map(columns, function(column) {return values[column]}).join(', ') + ");";
-  connection.query(sql, callback);
-}
-
 module.exports = {
   open: function(callback) {
     connection = mysql.createConnection(config.mysql);
@@ -40,6 +31,7 @@ module.exports = {
         cid varchar(12) NOT NULL,\
         first_name varchar(255),\
         last_name varchar(255),\
+        party varchar(3),\
         dist_id_run_for varchar(255),\
         fec_cand_id varchar(255),\
         PRIMARY KEY (id),\
@@ -65,16 +57,15 @@ module.exports = {
   },
 
   insert_candidate: function(candidate, callback) {
-    var columns = ["cid", "first_name", "last_name", "dist_id_run_for", "fec_cand_id"];
-    insert_helper("candidate", columns, candidate, callback);
+    connection.query("INSERT INTO candidate SET ?", candidate, callback);
   },
 
   insert_industry: function(industry, callback) {
-    insert_helper("industry", ["name"], industry, callback);
+    connection.query("INSERT INTO industry SET ?", industry, callback);
   },
 
   insert_organization: function(organization, callback) {
-    insert_helper("organization", ["name"], organization, callback);
+    connection.query("INSERT INTO organization SET ?", organization, callback);
   },
 
   /* insert_contribution expects a contribution object which consists of the
@@ -82,13 +73,7 @@ module.exports = {
    * (with individual and pacs amounts optional)
    */
   insert_contribution: function(contribution, callback) {
-    var columns = [];
-    if (industry_id in contribution) {
-      columns = ["candidate_id", "industry_id", "individual", "pacs", "total"];
-    } else {
-      columns = ["candidate_id", "organization_id", "total"];
-    }
-    insert_helper("contribution", columns, contribution, callback);
+    connection.query("INSERT INTO contribution SET ?", contribution, callback);
   },
 
   close: function(callback) {

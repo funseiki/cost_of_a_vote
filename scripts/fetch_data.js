@@ -1,13 +1,18 @@
-var mysql = require('mysql'),
+var async = require('async'),
+    mysql = require('mysql'),
+    fs = require('fs'),
     config = require('./config'),
-    db_manager = require('./db_manager');
+    db_manager = require('./db_manager'),
+    candidates = require("../data/candidates.json");
 
-db_manager.open(function(err) {
-  console.log(err);
-  db_manager.create_tables(function(err) {
-    console.log('in create callback');
-    console.log(err);
-    db_manager.close(console.log);
-  });
-});
 
+async.series([
+  db_manager.open,
+  db_manager.create_tables,
+
+  function(callback) {
+    async.each(candidates, db_manager.insert_candidate, callback);
+  },
+
+  db_manager.close
+], function(err, results) { console.log(err);});
