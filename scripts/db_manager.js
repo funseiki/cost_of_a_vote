@@ -6,6 +6,7 @@ var _ = require('underscore'),
 
 module.exports = {
   open: function(callback) {
+    //TODO use a pool instead
     connection = mysql.createConnection(config.mysql);
     connection.connect(callback);
   },
@@ -56,8 +57,15 @@ module.exports = {
     }, callback);
   },
 
+  /* Inserts a candidate
+   * callback is caleld with  the candidate object with the id set
+   */
   insert_candidate: function(candidate, callback) {
-    connection.query("INSERT INTO candidate SET ?", candidate, callback);
+    connection.query("INSERT INTO candidate SET ?", candidate, function(err, result){
+      if (err) callback(err);
+      candidate.id = result.insertId;
+      callback(null, candidate);
+    });
   },
 
   insert_industry: function(industry, callback) {

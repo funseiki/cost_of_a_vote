@@ -5,7 +5,8 @@
   "dependencies": {
     "mysql": "2.0.0-alpha7",
     "underscore": "1.4.4",
-    "async": "0.2.7"
+    "async": "0.2.7",
+    "node-rest-client": "0.0.2"
   },
   "engines": "node 0.8.7"
 }
