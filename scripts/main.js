@@ -22,9 +22,10 @@ var color_scale = d3.scale.linear().range([0, 1]).domain([0, d3.max(industryToCa
 
 //GLOBAL STRENGTH SCALE
 var strength_scale = d3.scale.linear().range([2, 10]) /* thickness range for flow lines */
-.domain([0, d3.max(industryToCandidates, function(d) {
-    return d.percent;
-})]);
+    .domain([0, d3.max(industryToCandidates, function(d) {
+        console.log(d);
+        return d.percent;
+    })]);
 
 function getIndustryToCandidates()
 {
@@ -32,12 +33,13 @@ function getIndustryToCandidates()
      *  target: candidate id
      **/
     industryToCandidates = [
-        {source: 0, target: 2, percent: 20, money: 200},
-        {source: 0, target: 8, percent: 14, money: 200},
-        {source: 0, target: 3, percent: 16, money: 200},
-        {source: 1, target: 4, percent: 10, money: 200},
-        {source: 4, target: 2, percent: 10, money: 200},
-        {source: 5, target: 8, percent: 30, money: 200}
+        {source: 0, target: 2, percent: 20, money: 200}
+    ,   {source: 0, target: 8, percent: 14, money: 200}
+    ,   {source: 0, target: 3, percent: 16, money: 200}
+    ,   {source: 1, target: 4, percent: 10, money: 200}
+    ,   {source: 4, target: 2, percent: 10, money: 200}
+    ,   {source: 5, target: 8, percent: 30, money: 200}
+    ,   {source: 8, target: 9, percent: 3, money: 200}
     ];
 }
 
@@ -148,10 +150,12 @@ function drawConnections(connectionData, connectionClass)
 
 function drawCurve(d, src_pre, target_pre)
 {
+    // Inspired by this: http://blog.stephenboak.com/2012/06/15/d3-flow-vis-tutorial.html
     var source_id = src_pre + d.source;
     var target_id = target_pre + d.target
-    var slope = Math.atan2((+d3.select(target_id).attr("cy") - d3.select(source_id).attr("cy")), (+d3.select(target_id).attr("cx") - d3.select(source_id).attr("cx")));
-    var slopePlus90 = Math.atan2((+d3.select(target_id).attr("cy") - d3.select(source_id).attr("cy")), (+d3.select(target_id).attr("cx") - d3.select(source_id).attr("cx"))) + (Math.PI / 2);
+    var slope = Math.atan2((+d3.select(target_id).attr("cy") - d3.select(source_id).attr("cy")),
+                           (+d3.select(target_id).attr("cx") - d3.select(source_id).attr("cx")));
+    var slopePlus90 = slope + (Math.PI / 2);
 
     var sourceX = +d3.select(source_id).attr("cx");
     var sourceY = +d3.select(source_id).attr("cy");
@@ -160,17 +164,26 @@ function drawCurve(d, src_pre, target_pre)
 
     var arrowOffset = 20;
     var points = [];
-    var first = [sourceX + radius * Math.cos(slope) - strength_scale(d.percent) * Math.cos(slopePlus90), sourceY + radius * Math.sin(slope) - strength_scale(d.percent) * Math.sin(slopePlus90)]
+    var xTan = radius*Math.cos(slope)
+    ,   xOff = radius*Math.cos(slopePlus90)
+    ,   yTan = radius*Math.sin(slope)
+    ,   yOff = radius*Math.sin(slopePlus90);
+
+    var first = [sourceX -xTan + xOff, sourceY - yTan + yOff]
+    ,   second = [sourceX -xTan - xOff, sourceY -yTan - yOff]
+    ,   third = [targetX, targetY];
+    /*var first = [sourceX + radius * Math.cos(slope) - d.percent * Math.cos(slopePlus90), sourceY + radius * Math.sin(slope) - (d.percent) * Math.sin(slopePlus90)]
     ,   second = [sourceX + radius * Math.cos(slope), sourceY + radius * Math.sin(slope)]
     ,   third = [targetX - radius * Math.cos(slope), targetY - radius * Math.sin(slope)]
-    ,   fourth = [targetX - (radius + arrowOffset) * Math.cos(slope) - strength_scale(d.percent + (arrowOffset / 2)) * Math.cos(slopePlus90), targetY - (radius + arrowOffset) * Math.sin(slope) - strength_scale(d.percent+ (arrowOffset / 2)) * Math.sin(slopePlus90)]
-    ,   fifth = [targetX - (radius + arrowOffset) * Math.cos(slope) - strength_scale(d.percent) * Math.cos(slopePlus90), targetY - (radius + arrowOffset) * Math.sin(slope) - strength_scale(d.percent) * Math.sin(slopePlus90)];
-
+    ,   fourth = [targetX - (radius + arrowOffset) * Math.cos(slope) - (d.percent + (arrowOffset / 2)) * Math.cos(slopePlus90), targetY - (radius + arrowOffset) * Math.sin(slope) - (d.percent+ (arrowOffset / 2)) * Math.sin(slopePlus90)]
+    ,   fifth = [targetX - (radius + arrowOffset) * Math.cos(slope) - (d.percent) * Math.cos(slopePlus90), targetY - (radius + arrowOffset) * Math.sin(slope) - (d.percent) * Math.sin(slopePlus90)];
+	*/
     points.push(first);
     points.push(second);
     points.push(third);
+    /*points.push(third);
     points.push(fourth);
-    points.push(fifth);
+    points.push(fifth);*/
 
 
     return d3LineLinear(points) + "Z";
