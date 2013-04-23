@@ -14,7 +14,18 @@ var _ = require('underscore'),
 
 function error_handler(error) {
   console.log(error);
-  throw error;
+}
+
+/* open_secrets_parser checks the status code and noops if it's >=400,
+ * otherwise it delegates to the json parser. This is necessarry because open
+ * secrets is not setting content-type headers correctly.
+ */
+function open_secrets_parser(body, callback) {
+  if (parseInt(this.statusCode) >= 400) {
+    callback(new Error("Status is " + this.statusCode));
+  } else {
+    restler.parsers.json.call(this, body, callback);
+  }
 }
 
 // Warning: this function is pretty ugly
@@ -23,12 +34,15 @@ function populate_contributions(candidate, callback) {
       organization_contributions_url = base_url + '&method=candContrib',
       industry_url = base_url + '&method=candIndustry';
 
+      console.log(organization_contributions_url);
+      console.log(industry_url);
+
   // TODO for some candidates there will be no data (like tim) handle
   // that case!!
   // TODO you might not really need this parallel call here... KISS!
   async.parallel([
     function(callback) {
-      restler.get(organization_contributions_url, {'parser': restler.parsers.json}).on('success', function(data) {
+      restler.get(organization_contributions_url, {'parser': open_secrets_parser}).on('success', function(data) {
         var organizations = data['response']['contributors']['contributor'];
 
         async.each(organizations, function(organization, callback) {
@@ -46,7 +60,7 @@ function populate_contributions(candidate, callback) {
     },
 
   function(callback) {
-    restler.get(industry_url, {'parser': restler.parsers.json}).on('success', function(data) {
+    restler.get(industry_url, {'parser': open_secrets_parser}).on('success', function(data) {
       var industries = data['response']['industries']['industry'];
 
       async.each(industries, function(industry, callback) {
@@ -79,7 +93,7 @@ async.series([
    */
   function(callback) {
     //TODO ERROR HANDLING FOR POPULATE CONTRIBUTIONS... BIOTCH!
-    populate_contributions({id: 1, cid: 'N00007360'}, callback);
+    populate_contributions({id: 1, cid: 'N00034296'}, callback);
     //async.each(candidates, populate_contributions,  callback);
   },
 
