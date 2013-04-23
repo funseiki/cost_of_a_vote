@@ -14,3 +14,8 @@ svg .node {
 .industry {
     fill: rgba(200, 10, 30, 1);
 }
+
+.ind2cand {
+    stroke: rgba(255, 255, 255, .5);
+    stroke-width: 1.5;
+}
