@@ -165,12 +165,12 @@ function drawCurve(d, src_pre, target_pre)
     var arrowOffset = 20;
     var points = [];
     var xTan = radius*Math.cos(slope)
-    ,   xOff = radius*Math.cos(slopePlus90)
+    ,   xOff = radius*(d.percent/100)*Math.cos(slopePlus90)
     ,   yTan = radius*Math.sin(slope)
-    ,   yOff = radius*Math.sin(slopePlus90);
+    ,   yOff = radius*(d.percent/100)*Math.sin(slopePlus90);
 
-    var first = [sourceX -xTan + xOff, sourceY - yTan + yOff]
-    ,   second = [sourceX -xTan - xOff, sourceY -yTan - yOff]
+    var first = [sourceX + xOff, sourceY + yOff]
+    ,   second = [sourceX - xOff, sourceY - yOff]
     ,   third = [targetX, targetY];
     /*var first = [sourceX + radius * Math.cos(slope) - d.percent * Math.cos(slopePlus90), sourceY + radius * Math.sin(slope) - (d.percent) * Math.sin(slopePlus90)]
     ,   second = [sourceX + radius * Math.cos(slope), sourceY + radius * Math.sin(slope)]
