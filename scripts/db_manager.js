@@ -2,15 +2,20 @@ var _ = require('underscore'),
     async = require('async'),
     mysql = require('mysql'),
     config = require('./config'),
-    connection = null;
+    pool = mysql.createPool(config.mysql);
+
+function insert_and_return_record(sql, record, callback) {
+  pool.getConnection(function(err, connection) {
+    connection.query(sql, record, function(err, result){
+      if (err) callback(err);
+      record.id = result.insertId;
+      connection.end();
+      callback(null, record);
+    });
+  });
+}
 
 module.exports = {
-  open: function(callback) {
-    //TODO use a pool instead
-    connection = mysql.createConnection(config.mysql);
-    connection.connect(callback);
-  },
-
   /* create_tables only creates the tables if they do not exist
    */
   create_tables: function(callback) {
@@ -53,7 +58,12 @@ module.exports = {
     ];
 
     async.eachSeries(table_sqls, function(sql, callback) {
-      connection.query(sql, callback);
+      pool.getConnection(function(err, connection) {
+        connection.query(sql, function(err) {
+          connection.end();
+          callback();
+        });
+      });
     }, callback);
   },
 
@@ -61,19 +71,17 @@ module.exports = {
    * callback is caleld with  the candidate object with the id set
    */
   insert_candidate: function(candidate, callback) {
-    connection.query("INSERT INTO candidate SET ?", candidate, function(err, result){
-      if (err) callback(err);
-      candidate.id = result.insertId;
-      callback(null, candidate);
-    });
+    insert_and_return_record("INSERT INTO candidate SET ?", candidate, callback);
   },
 
+  // TODO return the industry with id set
   insert_industry: function(industry, callback) {
-    connection.query("INSERT INTO industry SET ?", industry, callback);
+    insert_and_return_record("INSERT INTO industry SET ?", industry, callback);
   },
 
+  // TODO return the organization with id set
   insert_organization: function(organization, callback) {
-    connection.query("INSERT INTO organization SET ?", organization, callback);
+    insert_and_return_record("INSERT INTO organization SET ?", organization, callback);
   },
 
   /* insert_contribution expects a contribution object which consists of the
@@ -81,10 +89,9 @@ module.exports = {
    * (with individual and pacs amounts optional)
    */
   insert_contribution: function(contribution, callback) {
-    connection.query("INSERT INTO contribution SET ?", contribution, callback);
-  },
-
-  close: function(callback) {
-    connection.end(callback);
+    pool.getConnection(function(err, connection) {
+      connection.query("INSERT INTO contribution SET ?", contribution, callback);
+      connection.end();
+    });
   }
 }
