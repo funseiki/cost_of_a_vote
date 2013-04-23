@@ -1,4 +1,9 @@
 /** Globals **/
+// Layer objects
+var svg = null
+,   connection_layer = null
+,   node_layer = null;
+
 // Nodes
 var candidates = [];
 var industries = [];
@@ -91,7 +96,7 @@ function drawNodes(nodeData, nodeClass)
         default:
             break;
     }
-    d3.select("svg").selectAll("circle." + nodeClass)
+    node_layer.selectAll("circle." + nodeClass)
         .data(nodeData)
         .enter().append("circle")
             .attr("id", function(node)
@@ -119,7 +124,7 @@ function drawConnections(connectionData, connectionClass)
     var src_pre = "#ind_";
     var dst_pre = "#cand_";
 
-    d3.select("svg").selectAll("path." + connectionClass)
+    connection_layer.selectAll("path." + connectionClass)
         .data(connectionData)
         .enter().append("path")
             .attr("class", connectionClass)
@@ -171,12 +176,25 @@ function drawCurve(d, src_pre, target_pre)
     return d3LineLinear(points) + "Z";
 }
 
+/** Initializes how the layering will be handled
+ * Note: Order matters
+ */
+function initLayers()
+{
+    svg = d3.select("svg");
+    connection_layer = svg.append("g")
+        .attr("class", "connections");
+    node_layer = svg.append("g")
+        .attr("class", "nodes");
+}
 
 /** setup: grabs all the necessary data
  *
  **/
 function setup()
 {
+    initLayers();
+
     // call getters
     getCandidates();
     getIndustries();
