@@ -1,0 +1,9 @@
+module CostOfAVote; end;
+
+CostOfAVote::Config = {
+  :mysql => {
+    :host => '',
+    :username => '',
+    :database => ''
+  }
+}

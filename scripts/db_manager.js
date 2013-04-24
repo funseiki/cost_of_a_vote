@@ -18,42 +18,39 @@ function insert_and_return_record(sql, record, callback) {
 module.exports = {
   /* create_tables only creates the tables if they do not exist
    */
+  // TODO make the primary keys strings... thince they already have those as
+  // uniques anyway!
   create_tables: function(callback) {
     var table_sqls = [
       "CREATE TABLE IF NOT EXISTS industry (\
-        id int(11) NOT NULL AUTO_INCREMENT,\
+        id varchar(5) NOT NULL,\
         name varchar(255) NOT NULL,\
         PRIMARY KEY (id)\
-      ) ENGINE=InnoDB AUTO_INCREMENT=1;",
+      ) ENGINE=InnoDB;",
 
-      "CREATE TABLE IF NOT EXISTS organization (\
-        id int(11) NOT NULL AUTO_INCREMENT,\
+      "CREATE TABLE IF NOT EXISTS contributor (\
+        id varchar(12) NOT NULL,\
+        industry_id varchar(5),\
         name varchar(255) NOT NULL,\
         PRIMARY KEY (id)\
-      ) ENGINE=InnoDB AUTO_INCREMENT=1;",
+      ) ENGINE=InnoDB;",
 
       "CREATE TABLE IF NOT EXISTS candidate (\
-        id int(11) NOT NULL AUTO_INCREMENT,\
-        cid varchar(12) NOT NULL,\
-        first_name varchar(255),\
-        last_name varchar(255),\
+        id varchar(9) NOT NULL,\
+        name varchar(255) NOT NULL,\
         party varchar(3),\
-        dist_id_run_for varchar(255),\
-        fec_cand_id varchar(255),\
         PRIMARY KEY (id),\
         UNIQUE KEY cid_index (cid)\
       ) ENGINE=InnoDB AUTO_INCREMENT=1;",
 
       "CREATE TABLE IF NOT EXISTS contribution (\
-        candidate_id int(11),\
-        industry_id int(11),\
-        organization_id int(11),\
-        individual int unsigned,\
-        pacs int unsigned,\
-        total int unsigned,\
+        candidate_id varchar(9),\
+        contributor_id varchar(12),\
+        industry_id varchar(5),\
+        amount int unsigned,\
         FOREIGN KEY (candidate_id) REFERENCES candidate(id),\
-        FOREIGN KEY (industry_id) REFERENCES industry(id),\
-        FOREIGN KEY (organization_id) REFERENCES organization(id)\
+        FOREIGN KEY (contributor_id) REFERENCES contributor(id),\
+        FOREIGN KEY (industry_id) REFERENCES industry(id)\
       ) ENGINE=InnoDB;"
     ];
 
