@@ -16,16 +16,8 @@ var candidatesToVotes = [];
 var d3color = d3.interpolateRgb("#BAE4B3", "#006D2C");
 var d3LineLinear = d3.svg.line().interpolate("linear");
 
-var color_scale = d3.scale.linear().range([0, 1]).domain([0, d3.max(industryToCandidates, function(d) {
-    return d.percent;
-})]);
-
-//GLOBAL STRENGTH SCALE
-var strength_scale = d3.scale.linear().range([2, 10]) /* thickness range for flow lines */
-    .domain([0, d3.max(industryToCandidates, function(d) {
-        console.log(d);
-        return d.percent;
-    })]);
+var color_scale = null;
+var strength_scale = null;
 
 function getIndustryToCandidates()
 {
@@ -34,12 +26,12 @@ function getIndustryToCandidates()
      **/
     industryToCandidates = [
         {source: 0, target: 2, percent: 20, money: 200}
-    ,   {source: 0, target: 8, percent: 14, money: 200}
-    ,   {source: 0, target: 3, percent: 16, money: 200}
-    ,   {source: 1, target: 4, percent: 10, money: 200}
-    ,   {source: 4, target: 2, percent: 10, money: 200}
-    ,   {source: 5, target: 8, percent: 30, money: 200}
-    ,   {source: 8, target: 9, percent: 3, money: 200}
+     ,  {source: 0, target: 8, percent: 14, money: 200}
+     ,  {source: 0, target: 3, percent: 36, money: 200}
+     ,  {source: 1, target: 4, percent: 10, money: 200}
+     ,  {source: 4, target: 2, percent: 10, money: 200}
+     ,  {source: 5, target: 8, percent: 50, money: 200}
+     ,  {source: 8, target: 9, percent: 3, money: 200}
     ];
 }
 
@@ -201,6 +193,21 @@ function initLayers()
         .attr("class", "nodes");
 }
 
+function setupFunctions()
+{
+    color_scale = d3.scale.linear()
+    .range([0, 1])
+    .domain([0, d3.max(industryToCandidates, function(d) {
+        return d.percent;
+    })]);
+
+    //GLOBAL STRENGTH SCALE
+    strength_scale = d3.scale.linear().range([2, 10]) /* thickness range for flow lines */
+    .domain([0, d3.max(industryToCandidates, function(d) {
+        return d.percent;
+    })]);
+}
+
 /** setup: grabs all the necessary data
  *
  **/
@@ -213,6 +220,9 @@ function setup()
     getIndustries();
     getVotes();
     getIndustryToCandidates();
+
+    // Setup functions
+    setupFunctions();
 
     drawNodes(votes, "vote");
     drawNodes(candidates, "candidate");
