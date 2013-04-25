@@ -1,12 +1,14 @@
 require 'csv'
-require 'json'
 require 'mysql'
 require './config.rb'
 
 module CostOfAVote; end;
 
+FILEPATH = File.expand_path(File.dirname(__FILE__))
+
 CLIENT = Mysql.connect(CostOfAVote::Config[:mysql][:hostname], CostOfAVote::Config[:mysql][:username], nil, CostOfAVote::Config[:mysql][:database])
 
+# Note the contributions do not have foreign key constraint to industry
 CostOfAVote::CreateTableSql = [
   """CREATE TABLE IF NOT EXISTS industry (
      id varchar(5) NOT NULL,
@@ -32,12 +34,44 @@ CostOfAVote::CreateTableSql = [
     amount int unsigned,
     FOREIGN KEY (candidate_id) REFERENCES candidate(id),
     FOREIGN KEY (contributor_id) REFERENCES contributor(id),
-    FOREIGN KEY (industry_id) REFERENCES industry(id)
+    KEY (industry_id)
+  ) ENGINE=InnoDB;""",
+
+  # This table is temporary for individual contributions, the contributors from
+  # it will be loaded into contributor, and the contributions into contribution
+  """CREATE TABLE IF NOT EXISTS individual_contributions (
+    contributor_id varchar(12),
+    contributor_name varchar(255),
+    candidate_id varchar(9),
+    industry_id varchar(5),
+    amount int unsigned
   ) ENGINE=InnoDB;"""
+]
+CostOfAVote::LoadDataSql = [
+  # Load PACs into the contributor table
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cmtes12.txt' INTO TABLE contributor
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  (@dummy, id, name, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, industry_id,
+  @dummy, @dummy, @dummy, @dummy);""",
+
+  # Load individual contributions into the individual_contributions table
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/indivs12.txt' INTO TABLE individual_contributions
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  (@dummy, @dummy, contributor_id, contributor_name, candidate_id, @dummy,
+  @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
+  @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);
+  """
+
+  # Load individual contributions into the individual_contributions table
+
 ]
 
 def create_tables
   CostOfAVote::CreateTableSql.each { |sql| CLIENT.query(sql) }
+end
+
+def import_contributions
+  CostOfAVote::LoadDataSql.each { |sql| CLIENT.query(sql) }
 end
 
 def insert_record(table, record)
@@ -90,58 +124,7 @@ def import_candidates
   candidates.each { |candidate| insert_record("candidate", candidate) }
 end
 
-def convert_individual_contributions
-  file = File.open("open_secrets_data/indivs12.txt")
-
-  file.each_line.with_index do |line, idx|
-    begin
-      row = CSV.parse_line(line)
-      contributor_id = row[2][1...-1]
-      name = row[4][1...-1] + ' ' + row[3][1..-1]
-      candidate_id = row[5][1...-1]
-      industry_id = row[8][1...-1]
-      amount = row[10].to_i
-
-      contributor = {
-        :id => contributor_id,
-        :name => name,
-        :industry_id => industry_id
-      }
-
-      contribution = {
-        :contributor_id => contributor_id,
-        :candidate_id => candidate_id,
-        :industry_id => industry_id,
-        :amount => amount
-      }
-
-      yield contributor, contribution
-    rescue
-      puts "fuck"
-      # fuckit
-    end
-  end
-end
-
-def import_individual_contributions
-  convert_individual_contributions do |contributor, contribution|
-    begin
-      insert_record("contributor", contributor)
-    rescue
-      # Most of these are simply duplicate primary key exceptions, which is okay
-      # here
-    end
-
-    begin
-      insert_record("contribution", contribution)
-    rescue Exception => e
-      # TODO this is happening a lot because we are not taking into account
-      # committes (who's id starts with "C")...
-    end
-  end
-end
-
 create_tables
 import_industries
 import_candidates
-import_individual_contributions
+import_contributions
