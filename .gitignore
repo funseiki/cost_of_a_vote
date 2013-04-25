@@ -1,3 +1,12 @@
 .DS_Store
 config.js
 node_modules
+.rbenv-gemset
+.rbenv-version
+Gemfile.lock
+config.rb
+cands12.txt
+indivs12.txt
+pacs12.txt
+cmtes12.txt
+pac_other12.txt
