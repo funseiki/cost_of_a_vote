@@ -19,20 +19,22 @@ CostOfAVote::CreateTableSql = [
     id varchar(12) NOT NULL,
     industry_id varchar(5),
     name varchar(255) NOT NULL,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    KEY (industry_id)
   ) ENGINE=InnoDB;""",
   """CREATE TABLE IF NOT EXISTS candidate (
     id varchar(9) NOT NULL,
     name varchar(255) NOT NULL,
     party varchar(3),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    KEY(party)
   ) ENGINE=InnoDB AUTO_INCREMENT=1;""",
   """CREATE TABLE IF NOT EXISTS contribution (
     candidate_id varchar(9),
     contributor_id varchar(12),
     industry_id varchar(5),
     amount int unsigned,
-    FOREIGN KEY (candidate_id) REFERENCES candidate(id),
+    KEY (candidate_id),
     FOREIGN KEY (contributor_id) REFERENCES contributor(id),
     KEY (industry_id)
   ) ENGINE=InnoDB;""",
@@ -48,22 +50,39 @@ CostOfAVote::CreateTableSql = [
   ) ENGINE=InnoDB;"""
 ]
 CostOfAVote::LoadDataSql = [
+  # Load Candidates into the candidate table
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cands12.txt' REPLACE INTO TABLE candidate
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  (@dummy, @dummy, id, name, party, @dummy, @dummy, @dummy, @dummy, @dummy,
+  @dummy, @dummy);""",
+
   # Load PACs into the contributor table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cmtes12.txt' INTO TABLE contributor
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
   (@dummy, id, name, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, industry_id,
   @dummy, @dummy, @dummy, @dummy);""",
 
+  # Load PAC contributions into the contributions table
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE contribution
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  (@dummy, @dummy, contributor_id, candidate_id, amount, @dummy, industry_id, @dummy, @dummy, @dummy);""",
+
   # Load individual contributions into the individual_contributions table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/indivs12.txt' INTO TABLE individual_contributions
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
   (@dummy, @dummy, contributor_id, contributor_name, candidate_id, @dummy,
   @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
-  @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);
-  """
+  @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);""",
 
-  # Load individual contributions into the individual_contributions table
+  # For every contribution direct to candidate, add that to the contributions
+  # table
+  """REPLACE INTO contributor (id, industry_id, name)
+  SELECT contributor_id, industry_id, contributor_name
+  FROM individual_contributions WHERE candidate_id LIKE 'N%';""",
 
+  """INSERT INTO contribution (candidate_id, contributor_id, industry_id, amount)
+  SELECT candidate_id, contributor_id, industry_id, amount
+  FROM individual_contributions WHERE candidate_id LIKE 'N%';"""
 ]
 
 def create_tables
@@ -98,33 +117,6 @@ def import_industries
   industries.each { |industry| insert_record("industry", industry) }
 end
 
-def convert_candidates
-  candidates_txt = File.open("open_secrets_data/cands12.txt").read
-  # get rid of nicnames, it causes an illegal quoting error
-  candidates_txt.gsub!(/"\w*"\s/, '') 
-  csv = CSV.new(candidates_txt, {:col_sep => ','})
-
-  candidates = {}
-  csv.each do |row|
-    # to know where the magic numbers come from, look at the raw data, there are
-    # pipes (|) everywhere
-    candidate = {
-      :id => row[2][1...-1],
-      :name => row[3][1...-5],
-      :party => row[4][1...-1]
-    }
-    candidates[candidate[:id]] = candidate
-  end
-
-  return candidates.values
-end
-
-def import_candidates
-  candidates = convert_candidates
-  candidates.each { |candidate| insert_record("candidate", candidate) }
-end
-
 create_tables
 import_industries
-import_candidates
 import_contributions
