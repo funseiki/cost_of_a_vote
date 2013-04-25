@@ -1,6 +1,6 @@
 require 'csv'
 require 'mysql'
-require './config.rb'
+require '../config.rb'
 
 module CostOfAVote; end;
 
