@@ -5,12 +5,10 @@ var svg = null
 ,   node_layer = null;
 
 // Nodes
-var candidates = [],
-    candidatesMap = {};
-var industries = [],
-    industriesMap = {};
-var votes = [],
-    votesMap = {};
+var candidates = [];
+var industries = [];
+var votes = [];
+var nodeMap = {};
 var radius = 10;
 
 // Links
@@ -55,7 +53,7 @@ function getIndustries()
         ,   individual: i+10
         };
         industries[i] = ind;
-        industriesMap[ind.id] = ind;
+        nodeMap["#ind_" + ind.id] = ind;
     }
 }
 
@@ -69,7 +67,7 @@ function getCandidates()
         ,   id: i
         };
         candidates[i] = candidate;
-        candidatesMap[candidate.id] = candidate;
+        nodeMap["#cand_" + candidate.id] = candidate;
     }
 }
 
@@ -266,7 +264,7 @@ function drawSankey()
         .size([300, 300])
         .nodeWidth(15)
         .nodePadding(10)
-        .nodes(candidatesMap)
+        .nodes(nodeMap)
         .links(industryToCandidates)
         .layout(32);
     var path = sankey.link();
