@@ -5,9 +5,12 @@ var svg = null
 ,   node_layer = null;
 
 // Nodes
-var candidates = [];
-var industries = [];
-var votes = [];
+var candidates = [],
+    candidatesMap = {};
+var industries = [],
+    industriesMap = {};
+var votes = [],
+    votesMap = {};
 var radius = 10;
 
 // Links
@@ -51,7 +54,8 @@ function getIndustries()
         ,   pacs: i+ 30
         ,   individual: i+10
         };
-        industries.push(ind);
+        industries[i] = ind;
+        industriesMap[ind.id] = ind;
     }
 }
 
@@ -64,7 +68,8 @@ function getCandidates()
             name: 'candidate' + i
         ,   id: i
         };
-        candidates.push(candidate);
+        candidates[i] = candidate;
+        candidatesMap[candidate.id] = candidate;
     }
 }
 
@@ -255,6 +260,18 @@ function setupFunctions()
     })]);
 }
 
+function drawSankey()
+{
+    var sankey = d3.sankey()
+        .size([300, 300])
+        .nodeWidth(15)
+        .nodePadding(10)
+        .nodes(candidatesMap)
+        .links(industryToCandidates)
+        .layout(32);
+    var path = sankey.link();
+}
+
 /** setup: grabs all the necessary data
  *
  **/
@@ -276,6 +293,8 @@ function setup()
     drawNodes(industries, "industry");
 
     drawConnections(industryToCandidates, "ind2cand");
+
+    //drawSankey();
 }
 
 setup();
