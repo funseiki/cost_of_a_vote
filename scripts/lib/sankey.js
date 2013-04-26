@@ -1,12 +1,24 @@
 d3.sankey = function() {
-  var underscore = _.noConflict();
-
   var sankey = {},
       nodeWidth = 24,
       nodePadding = 8,
       size = [1, 1],
       nodes = [],
+      nodesArr = [],
       links = [];
+
+  var obj_forEach =
+    function(callback)
+    {
+        for (var key in this)
+        {
+            // Make sure we're not iterating over something we've created
+            if(key != "forEach" && key != "length")
+            {
+                callback(this[key], key, this);
+            }
+        }
+    };
 
   sankey.nodeWidth = function(_) {
     if (!arguments.length) return nodeWidth;
@@ -24,22 +36,21 @@ d3.sankey = function() {
     if (!arguments.length) return nodes;
     nodes = _;
 
-    nodes.forEach = function(callback)
+    // Simulate a forEach, as if it were an Array
+    if(!(nodes instanceof Array))
     {
-        underscore.each(this, function(item, key, list)
+        nodes.forEach = obj_forEach;
+
+        // Create a length property - should probably be a method instead
+        var length = 0;
+        nodes.forEach(
+        function(a, b, c)
         {
-            if(key != "forEach" && key != "length")
-            {
-                callback(item, key, list);
-            }
+            length = length+1;
         });
-    };
-    var length = 0;
-    nodes.forEach(function(a, b, c)
-    {
-        length = length+1;
-    });
-    nodes.length = length;
+        nodes.length = length;
+    }
+
     return sankey;
   };
 
@@ -47,22 +58,6 @@ d3.sankey = function() {
     if (!arguments.length) return links;
     links = _;
 
-    links.forEach = function(callback)
-    {
-        underscore.each(this, function(item, key, list)
-        {
-            if(key != "forEach" && key != "length")
-            {
-                callback(item, key, list);
-            }
-        });
-    };
-    var length = 0;
-    links.forEach(function(a, b, c)
-    {
-        length = length+1;
-    });
-    links.length = length;
     return sankey;
   };
 
@@ -122,14 +117,35 @@ d3.sankey = function() {
     links.forEach(function(link) {
       var source = link.source,
           target = link.target;
-      /**if (typeof source === "number")**/ source = link.source = nodes[link.source];
-      /**if (typeof target === "number")**/ target = link.target = nodes[link.target];
+
+      /**if (typeof source === "number")**/
+      if(nodes instanceof Array)
+      {
+        source = link.source = nodes[link.source];
+        target = link.target = nodes[link.target];
+      }
+      else  // nodes should either be an Array or a d3.Map
+      {
+        source = link.source = nodes[link.source];//nodes.get(link.source);
+        target = link.target = nodes[link.target];//nodes.get(link.target);
+      }
+      /**if (typeof target === "number")**/
       source.sourceLinks.push(link);
       target.targetLinks.push(link);
     });
   }
 
-  // Compute the value (size) of each node by summing the associated links.
+  function nodesToArray(oldNodes)
+  {
+    // Convert to an array
+    var just_nodes = {};
+    oldNodes.forEach(function(node, key)
+    {
+        just_nodes[key] = node;
+    });
+    return d3.values(just_nodes);
+  }
+
   function computeNodeValues() {
     nodes.forEach(function(node) {
       node.value = Math.max(
@@ -148,7 +164,7 @@ d3.sankey = function() {
         nextNodes,
         x = 0;
 
-    while (remainingNodes.length) {
+    while(remainingNodes.length) {
       nextNodes = [];
       remainingNodes.forEach(function(node) {
         node.x = x;
@@ -189,13 +205,20 @@ d3.sankey = function() {
   }
 
   function computeNodeDepths(iterations) {
+    var arr = d3.values(nodes);
+    if(!(nodes instanceof Array))
+    {
+        arr = nodesToArray(nodes);
+    }
     var nodesByBreadth = d3.nest()
-        .key(function(d) { return d.x; })
+        .key(function(d) {
+            return d.x;
+        })
         .sortKeys(d3.ascending)
-        .entries(nodes)
-        .map(function(d) { return d.values; });
-
-    //
+        .entries(arr)
+        .map(function(d) {
+            return d.values;
+        });
     initializeNodeDepth();
     resolveCollisions();
     for (var alpha = 1; iterations > 0; --iterations) {
