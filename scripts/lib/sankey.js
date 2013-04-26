@@ -4,21 +4,35 @@ d3.sankey = function() {
       nodePadding = 8,
       size = [1, 1],
       nodes = [],
-      nodesArr = [],
       links = [];
 
-  var obj_forEach =
-    function(callback)
-    {
-        for (var key in this)
-        {
-            // Make sure we're not iterating over something we've created
-            if(key != "forEach" && key != "length")
-            {
-                callback(this[key], key, this);
-            }
-        }
-    };
+  function getListLength(list)
+  {
+      if(list instanceof Array)
+      {
+          return list.length;
+      }
+      else
+      {
+          return list.values().length;
+      }
+  }
+
+  function ForEach(list, callback)
+  {
+      if(list instanceof Array)
+      {
+          list.forEach(callback);
+      }
+      else
+      {
+          // Assume we have a d3 map object
+          list.forEach(function(key, element)
+          {
+              callback(element, key, list);
+          });
+      }
+  }
 
   sankey.nodeWidth = function(_) {
     if (!arguments.length) return nodeWidth;
@@ -35,21 +49,6 @@ d3.sankey = function() {
   sankey.nodes = function(_) {
     if (!arguments.length) return nodes;
     nodes = _;
-
-    // Simulate a forEach, as if it were an Array
-    if(!(nodes instanceof Array))
-    {
-        nodes.forEach = obj_forEach;
-
-        // Create a length property - should probably be a method instead
-        var length = 0;
-        nodes.forEach(
-        function(a, b, c)
-        {
-            length = length+1;
-        });
-        nodes.length = length;
-    }
 
     return sankey;
   };
@@ -110,7 +109,7 @@ d3.sankey = function() {
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
   function computeNodeLinks() {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       node.sourceLinks = [];
       node.targetLinks = [];
     });
@@ -118,36 +117,24 @@ d3.sankey = function() {
       var source = link.source,
           target = link.target;
 
-      /**if (typeof source === "number")**/
+      // nodes should either be an Array or a d3.Map
       if(nodes instanceof Array)
       {
         source = link.source = nodes[link.source];
         target = link.target = nodes[link.target];
       }
-      else  // nodes should either be an Array or a d3.Map
+      else
       {
-        source = link.source = nodes[link.source];//nodes.get(link.source);
-        target = link.target = nodes[link.target];//nodes.get(link.target);
+        source = link.source = nodes.get(link.source);
+        target = link.target = nodes.get(link.target);
       }
-      /**if (typeof target === "number")**/
       source.sourceLinks.push(link);
       target.targetLinks.push(link);
     });
   }
 
-  function nodesToArray(oldNodes)
-  {
-    // Convert to an array
-    var just_nodes = {};
-    oldNodes.forEach(function(node, key)
-    {
-        just_nodes[key] = node;
-    });
-    return d3.values(just_nodes);
-  }
-
   function computeNodeValues() {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       node.value = Math.max(
         d3.sum(node.sourceLinks, value),
         d3.sum(node.targetLinks, value)
@@ -164,9 +151,9 @@ d3.sankey = function() {
         nextNodes,
         x = 0;
 
-    while(remainingNodes.length) {
+    while(getListLength(remainingNodes)) {
       nextNodes = [];
-      remainingNodes.forEach(function(node) {
+      ForEach(remainingNodes, function(node) {
         node.x = x;
         node.dx = nodeWidth;
         node.sourceLinks.forEach(function(link) {
@@ -183,7 +170,7 @@ d3.sankey = function() {
   }
 
   function moveSourcesRight() {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       if (!node.targetLinks.length) {
         node.x = d3.min(node.sourceLinks, function(d) { return d.target.x; }) - 1;
       }
@@ -191,7 +178,7 @@ d3.sankey = function() {
   }
 
   function moveSinksRight(x) {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       if (!node.sourceLinks.length) {
         node.x = x - 1;
       }
@@ -199,26 +186,19 @@ d3.sankey = function() {
   }
 
   function scaleNodeBreadths(kx) {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       node.x *= kx;
     });
   }
 
   function computeNodeDepths(iterations) {
     var arr = d3.values(nodes);
-    if(!(nodes instanceof Array))
-    {
-        arr = nodesToArray(nodes);
-    }
     var nodesByBreadth = d3.nest()
-        .key(function(d) {
-            return d.x;
-        })
+        .key(function(d) { return d.x; })
         .sortKeys(d3.ascending)
         .entries(arr)
-        .map(function(d) {
-            return d.values;
-        });
+        .map(function(d) { return d.values; });
+
     initializeNodeDepth();
     resolveCollisions();
     for (var alpha = 1; iterations > 0; --iterations) {
@@ -314,11 +294,11 @@ d3.sankey = function() {
   }
 
   function computeLinkDepths() {
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       node.sourceLinks.sort(ascendingTargetDepth);
       node.targetLinks.sort(ascendingSourceDepth);
     });
-    nodes.forEach(function(node) {
+    ForEach(nodes, function(node) {
       var sy = 0, ty = 0;
       node.sourceLinks.forEach(function(link) {
         link.sy = sy;
