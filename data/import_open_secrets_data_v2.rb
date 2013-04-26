@@ -52,24 +52,24 @@ CostOfAVote::CreateTableSql = [
 CostOfAVote::LoadDataSql = [
   # Load Candidates into the candidate table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cands12.txt' REPLACE INTO TABLE candidate
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, @dummy, id, name, party, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy);""",
 
   # Load PACs into the contributor table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cmtes12.txt' INTO TABLE contributor
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, id, name, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, industry_id,
   @dummy, @dummy, @dummy, @dummy);""",
 
   # Load PAC contributions into the contributions table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE contribution
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, @dummy, contributor_id, candidate_id, amount, @dummy, industry_id, @dummy, @dummy, @dummy);""",
 
   # Load individual contributions into the individual_contributions table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/indivs12.txt' INTO TABLE individual_contributions
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, @dummy, contributor_id, contributor_name, candidate_id, @dummy,
   @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);""",
