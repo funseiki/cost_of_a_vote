@@ -2,7 +2,9 @@
 // Layer objects
 var svg              = null
 ,   connection_layer = null
-,   node_layer       = null;
+,   node_layer       = null
+,   node             = null
+,   connection       = null;
 
 // Sanky-fier
 var sankey = null;
@@ -58,10 +60,11 @@ function getIndustries()
     for (var i = 0; i < 10; i++)
     {
         var ind = {
-            name: 'industry' + i
-        ,   id: i
-        ,   pacs: i+ 30
-        ,   individual: i+10
+            name       : 'industry' + i
+        ,   id         : i
+        ,   pacs       : i+ 30
+        ,   individual : i+10
+        ,   type       : 'industry'
         };
         industries[i] = ind;
         nodeMap["#ind_" + ind.id] = ind;
@@ -76,6 +79,7 @@ function getCandidates()
         var candidate = {
             name: 'candidate' + i
         ,   id: i
+        ,   type: 'candidate'
         };
         candidates[i] = candidate;
         nodeMap["#cand_" + candidate.id] = candidate;
@@ -84,26 +88,6 @@ function getCandidates()
 
 function drawNodes(nodeData, nodeClass)
 {
-    // TODO: Make this better/more declarative
-    var x = 0;
-    var id_pre = "";
-    /*switch(nodeClass)
-    {
-        case 'industry':
-            x = 20;
-            id_pre = 'ind_';
-            break;
-        case 'candidate':
-            x = 170;
-            id_pre = 'cand_';
-            break;
-        case 'vote':
-            x = 220;
-            id_pre = 'vote_';
-            break;
-        default:
-            break;
-    }*/
     node = node_layer.selectAll("." + nodeClass)
         .data(nodeData)
         .enter().append("g")
@@ -122,26 +106,29 @@ function drawNodes(nodeData, nodeClass)
         .attr("width", sankey.nodeWidth())
         .style("fill", function(d)
             {
-                return d.color = color(d.name.replace(/ .*/, ""));
-            })
-        .style("stroke", function(d)
-            {
-                return d3.rgb(d.color).darker(2);
+                return d.color = color(d.type.replace(/ .*/, ""));
             })
         .append("title")
             .text(function(d)
                 {
                     return d.name + "\n" + format(d.value);
                 })
+    node.append("text")
+            .attr("x", -6)
+            .attr("y", function(d) { return d.dy/2; })
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("transform", null)
+            .text(function(d) { return d.name; })
+        .filter(function(d) { return d.x < width / 2; })
+            .attr("x",  6 + sankey.nodeWidth())
+            .attr("text-anchor", "start");
+
 }
 
 function drawConnections(connectionData, connectionClass)
 {
-    var id_pre = "ind2cand_"
-    var src_pre = "#ind_";
-    var dst_pre = "#cand_";
-
-    connection_layer.selectAll("." + connectionClass)
+    connection = connection_layer.selectAll("." + connectionClass)
         .data(connectionData)
         .enter().append("path")
             .attr("class", connectionClass)
@@ -150,20 +137,22 @@ function drawConnections(connectionData, connectionClass)
                 { return Math.max(1, d.dy); })
             .sort(function(a,b)
                 { return b.dy - a.dy; })
-            .append("title")
-                .text(function(d)
-                    {
-                        return d.source.name + "->" +
-                                d.target.name + "\n" +
-                                format(d.value);
-                    });
+    connection.append("title")
+            .text(function(d)
+                {
+                    return d.source.name + "->" +
+                            d.target.name + "\n" +
+                            format(d.value);
+                });
 }
 
 function dragmove(d)
 {
-    d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+    d3.select(this).attr("transform",
+            "translate(" + d.x + "," +
+                (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
     sankey.relayout();
-    link.attr("d", path);
+    connection.attr("d", path);
 }
 
 /** Initializes how the layering will be handled

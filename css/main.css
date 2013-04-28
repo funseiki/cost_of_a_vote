@@ -1,6 +1,10 @@
 svg .node {
-    stroke: orange;
-    stroke-width: 5;
+}
+
+.link {
+    fill: none;
+    stroke: #000;
+    stroke-opacity: .1;
 }
 
 .vote {
