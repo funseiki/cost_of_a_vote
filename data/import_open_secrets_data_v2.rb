@@ -1,6 +1,6 @@
 require 'csv'
 require 'mysql'
-require './config.rb'
+require '../config.rb'
 
 module CostOfAVote; end;
 
@@ -10,32 +10,36 @@ CLIENT = Mysql.connect(CostOfAVote::Config[:mysql][:hostname], CostOfAVote::Conf
 
 # Note the contributions do not have foreign key constraint to industry
 CostOfAVote::CreateTableSql = [
-  """CREATE TABLE IF NOT EXISTS industry (
+  """CREATE TABLE IF NOT EXISTS industries (
      id varchar(5) NOT NULL,
      name varchar(255) NOT NULL,
      PRIMARY KEY (id)
    ) ENGINE=InnoDB;""",
-   """CREATE TABLE IF NOT EXISTS contributor (
+   """CREATE TABLE IF NOT EXISTS contributors (
     id varchar(12) NOT NULL,
     industry_id varchar(5),
     name varchar(255) NOT NULL,
     PRIMARY KEY (id),
     KEY (industry_id)
   ) ENGINE=InnoDB;""",
-  """CREATE TABLE IF NOT EXISTS candidate (
-    id varchar(9) NOT NULL,
+  """CREATE TABLE IF NOT EXISTS candidates (
+    opensecrets_id varchar(9) NOT NULL,
+    thomas_id int,
+    govtrack_id int,
     name varchar(255) NOT NULL,
     party varchar(3),
-    PRIMARY KEY (id),
+    PRIMARY KEY (opensecrets_id),
+    KEY(thomas_id),
+    KEY(govtrack_id),
     KEY(party)
   ) ENGINE=InnoDB AUTO_INCREMENT=1;""",
-  """CREATE TABLE IF NOT EXISTS contribution (
+  """CREATE TABLE IF NOT EXISTS contributions (
     candidate_id varchar(9),
     contributor_id varchar(12),
     industry_id varchar(5),
     amount int unsigned,
     KEY (candidate_id),
-    FOREIGN KEY (contributor_id) REFERENCES contributor(id),
+    FOREIGN KEY (contributor_id) REFERENCES contributors(id),
     KEY (industry_id)
   ) ENGINE=InnoDB;""",
 
@@ -51,36 +55,36 @@ CostOfAVote::CreateTableSql = [
 ]
 CostOfAVote::LoadDataSql = [
   # Load Candidates into the candidate table
-  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cands12.txt' REPLACE INTO TABLE candidate
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
-  (@dummy, @dummy, id, name, party, @dummy, @dummy, @dummy, @dummy, @dummy,
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cands12.txt' REPLACE INTO TABLE candidates
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
+  (@dummy, @dummy, opensecrets_id, name, party, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy);""",
 
   # Load PACs into the contributor table
-  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cmtes12.txt' INTO TABLE contributor
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/cmtes12.txt' INTO TABLE contributors
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, id, name, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, industry_id,
   @dummy, @dummy, @dummy, @dummy);""",
 
   # Load PAC contributions into the contributions table
-  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE contribution
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE contributions
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, @dummy, contributor_id, candidate_id, amount, @dummy, industry_id, @dummy, @dummy, @dummy);""",
 
   # Load individual contributions into the individual_contributions table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/indivs12.txt' INTO TABLE individual_contributions
-  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\n'
+  FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
   (@dummy, @dummy, contributor_id, contributor_name, candidate_id, @dummy,
   @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);""",
 
   # For every contribution direct to candidate, add that to the contributions
   # table
-  """REPLACE INTO contributor (id, industry_id, name)
+  """REPLACE INTO contributors (id, industry_id, name)
   SELECT contributor_id, industry_id, contributor_name
   FROM individual_contributions WHERE candidate_id LIKE 'N%';""",
 
-  """INSERT INTO contribution (candidate_id, contributor_id, industry_id, amount)
+  """INSERT INTO contributions (candidate_id, contributor_id, industry_id, amount)
   SELECT candidate_id, contributor_id, industry_id, amount
   FROM individual_contributions WHERE candidate_id LIKE 'N%';"""
 ]
@@ -114,7 +118,7 @@ end
 
 def import_industries
   industries = convert_industries
-  industries.each { |industry| insert_record("industry", industry) }
+  industries.each { |industry| insert_record("industries", industry) }
 end
 
 create_tables

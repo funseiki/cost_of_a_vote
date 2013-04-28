@@ -1,0 +1,5 @@
+We want to be able to update votes without having duplicates / problems, as such
+we need a unique constraint in votes across thomas_id and bill_id.
+
+We also want this to be easily updateable, as such, move the updating code into
+tasks that can be run via cli or cron.
