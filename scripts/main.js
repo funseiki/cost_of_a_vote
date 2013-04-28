@@ -53,16 +53,16 @@ function getIndustryToCandidates()
 function getVotes()
 {
     candidatesToVotes = [
-        {source: "#cand_" + 0, target: "#bill_" + 0, value:1, vote:1},
-        {source: "#cand_" + 1, target: "#bill_" + 0, value:1, vote:0},
-        {source: "#cand_" + 2, target: "#bill_" + 1, value:1, vote:0},
-        {source: "#cand_" + 4, target: "#bill_" + 2, value:1, vote:-1},
-        {source: "#cand_" + 9, target: "#bill_" + 1, value:1, vote:1},
-        {source: "#cand_" + 9, target: "#bill_" + 0, value:1, vote:1},
-        {source: "#cand_" + 3, target: "#bill_" + 3, value:1, vote:-1},
-        {source: "#cand_" + 2, target: "#bill_" + 4, value:1, vote:1},
-        {source: "#cand_" + 5, target: "#bill_" + 4, value:1, vote:-1},
-        {source: "#cand_" + 4, target: "#bill_" + 3, value:1, vote:1}
+        {source: "#cand_" + 2, target: "#bill_" + 0, value:10, vote:1}
+     ,  {source: "#cand_" + 1, target: "#bill_" + 0, value:10, vote:0}
+     ,  {source: "#cand_" + 2, target: "#bill_" + 1, value:10, vote:0}
+     ,  {source: "#cand_" + 4, target: "#bill_" + 2, value:10, vote:-1}
+     ,  {source: "#cand_" + 9, target: "#bill_" + 1, value:10, vote:1}
+     ,  {source: "#cand_" + 9, target: "#bill_" + 0, value:10, vote:1}
+     ,  {source: "#cand_" + 3, target: "#bill_" + 3, value:10, vote:-1}
+     ,  {source: "#cand_" + 2, target: "#bill_" + 4, value:10, vote:1}
+     ,  {source: "#cand_" + 5, target: "#bill_" + 4, value:10, vote:-1}
+     ,  {source: "#cand_" + 4, target: "#bill_" + 3, value:10, vote:1}
     ];
 }
 
