@@ -13,11 +13,14 @@ get '/candidates' do
 end
 
 get '/contributors' do
-  candidate_ids = candidate_ids_lookup.keys.map{|k| "'#{k}'"}.join(',')
-  sql = "SELECT contributors.* FROM (contributions INNER JOIN contributors) WHERE contributions.candidate_id IN (#{candidate_ids});"
+  candidate_ids = ids_to_list(candidate_ids_lookup.keys)
+  sql = "SELECT DISTINCT(contributor_id)  FROM contributions WHERE candidate_id IN (#{candidate_ids});"
+
+  contributor_ids = ids_to_list(db_client.query(sql, :as => :array).to_a.flatten)
+  sql = "SELECT * FROM contributors WHERE id IN (#{contributor_ids});"
 
   contributors = {}
-  db_client.query(sql).each do |h|
+  db_client.query(sql, :as => :hash).each do |h|
     contributors[h["id"]] = h
   end
 
@@ -58,6 +61,10 @@ get '/votes' do
     }
   end
   JSON.dump(votes);
+end
+
+def ids_to_list(ids)
+  ids.map{|i| "'#{i}'"}.join(',')
 end
 
 
