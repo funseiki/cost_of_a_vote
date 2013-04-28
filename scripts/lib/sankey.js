@@ -105,6 +105,8 @@ d3.sankey = function() {
 
     return link;
   };
+  {
+  }
 
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
@@ -164,7 +166,6 @@ d3.sankey = function() {
       ++x;
     }
 
-    //
     moveSinksRight(x);
     scaleNodeBreadths((width - nodeWidth) / (x - 1));
   }
@@ -300,6 +301,21 @@ d3.sankey = function() {
     });
     ForEach(nodes, function(node) {
       var sy = 0, ty = 0;
+
+      // Compute starting points for links
+      node.sourceLinks.forEach(function(link) {
+        sy += link.dy;
+      });
+      node.targetLinks.forEach(function(link) {
+        ty += link.dy;
+      });
+
+      var s_spaceLeft = node.dy - sy,
+          t_spaceLeft = node.dy - ty;
+      sy = s_spaceLeft/2;
+      ty = t_spaceLeft/2;
+
+      // Squeeze links between however much space is left
       node.sourceLinks.forEach(function(link) {
         link.sy = sy;
         sy += link.dy;
