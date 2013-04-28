@@ -19,13 +19,14 @@ var margin       = {top: 1, right:1, bottom: 6, left:1},
 // Nodes
 var candidates = [],
     industries = [],
-    votes      = [],
+    bills      = [],
     nodeMap    = {},
     radius     = 10;
 
 // Links
 var industryToCandidates = [],
-    candidatesToVotes    = [];
+    candidatesToVotes    = [],
+    totalLinks           = [];
 
 // Drawing Helper Functions
 var path           = null,
@@ -51,7 +52,33 @@ function getIndustryToCandidates()
 
 function getVotes()
 {
+    candidatesToVotes = [
+        {source: "#cand_" + 0, target: "#bill_" + 0, value:1, vote:1},
+        {source: "#cand_" + 1, target: "#bill_" + 0, value:1, vote:0},
+        {source: "#cand_" + 2, target: "#bill_" + 1, value:1, vote:0},
+        {source: "#cand_" + 4, target: "#bill_" + 2, value:1, vote:-1},
+        {source: "#cand_" + 9, target: "#bill_" + 1, value:1, vote:1},
+        {source: "#cand_" + 9, target: "#bill_" + 0, value:1, vote:1},
+        {source: "#cand_" + 3, target: "#bill_" + 3, value:1, vote:-1},
+        {source: "#cand_" + 2, target: "#bill_" + 4, value:1, vote:1},
+        {source: "#cand_" + 5, target: "#bill_" + 4, value:1, vote:-1},
+        {source: "#cand_" + 4, target: "#bill_" + 3, value:1, vote:1}
+    ];
+}
+
+function getBills()
+{
     // TODO: Query database for this
+    for(var i = 0; i < 5; i++)
+    {
+        var bill = {
+            name: "bill_" + i,
+            type: "something",
+            id: i
+        };
+        bills.push(bill);
+        nodeMap["#bill_" + bill.id] = bill;
+    }
 }
 
 function getIndustries()
@@ -190,10 +217,10 @@ function drawSankey()
 {
     sankey
         .nodes(d3.map(nodeMap))
-        .links(industryToCandidates)
+        .links(totalLinks)
         .layout(32);
 
-    drawConnections(industryToCandidates, "link");
+    drawConnections(totalLinks, "link");
     drawNodes(d3.values(nodeMap), "node")
 }
 
@@ -206,8 +233,10 @@ function setup()
     // call getters
     getCandidates();
     getIndustries();
-    getVotes();
+    getBills();
     getIndustryToCandidates();
+    getVotes();
+    totalLinks = industryToCandidates.concat(candidatesToVotes);
 
     // Setup functions
     setupFunctions();
