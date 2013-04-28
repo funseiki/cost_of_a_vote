@@ -1,24 +1,39 @@
 /** Globals **/
 // Layer objects
-var svg = null
+var svg              = null
 ,   connection_layer = null
-,   node_layer = null;
+,   node_layer       = null;
+
+// Sanky-fier
+var sankey = null;
+
+// Attributes
+var margin       = {top: 1, right:1, bottom: 6, left:1},
+    width        = 960 - margin.left - margin.right,
+    height       = 500 - margin.top - margin.bottom,
+    node_width   = 15,
+    node_padding = 10;
 
 // Nodes
-var candidates = [];
-var industries = [];
-var votes = [];
-var nodeMap = {};
-var radius = 10;
+var candidates = [],
+    industries = [],
+    votes      = [],
+    nodeMap    = {},
+    radius     = 10;
 
 // Links
-var industryToCandidates = [];
-var candidatesToVotes = [];
-var d3color = d3.interpolateRgb("#BAE4B3", "#006D2C");
-var d3LineLinear = d3.svg.line().interpolate("linear");
+var industryToCandidates = [],
+    candidatesToVotes    = [],
+    d3color              = d3.interpolateRgb("#BAE4B3", "#006D2C"),
+    d3LineLinear         = d3.svg.line().interpolate("linear");
 
-var color_scale = null;
-var strength_scale = null;
+// Drawing Helper Functions
+var color_scale    = null,
+    strength_scale = null,
+    path           = null,
+    formatNumber   = null,
+    format         = null,
+    color          = null;
 
 function getIndustryToCandidates()
 {
@@ -26,13 +41,13 @@ function getIndustryToCandidates()
      *  target: candidate id
      **/
     industryToCandidates = [
-        {source: 0, target: 2, percent: 20, money: 200}
-     ,  {source: 0, target: 8, percent: 14, money: 200}
-     ,  {source: 0, target: 3, percent: 36, money: 200}
-     ,  {source: 1, target: 4, percent: 10, money: 200}
-     ,  {source: 4, target: 2, percent: 10, money: 200}
-     ,  {source: 5, target: 8, percent: 50, money: 200}
-     ,  {source: 8, target: 9, percent: 3, money: 200}
+        {source: "#ind_" + 0, target: "#cand_" + 2, percent: 20, value: 200}
+     ,  {source: "#ind_" + 0, target: "#cand_" + 8, percent: 14, value: 300}
+     ,  {source: "#ind_" + 0, target: "#cand_" + 3, percent: 36, value: 200}
+     ,  {source: "#ind_" + 1, target: "#cand_" + 4, percent: 10, value: 200}
+     ,  {source: "#ind_" + 4, target: "#cand_" + 2, percent: 10, value: 200}
+     ,  {source: "#ind_" + 5, target: "#cand_" + 8, percent: 50, value: 200}
+     ,  {source: "#ind_" + 8, target: "#cand_" + 9, percent: 3, value: 200}
     ];
 }
 
@@ -76,7 +91,7 @@ function drawNodes(nodeData, nodeClass)
     // TODO: Make this better/more declarative
     var x = 0;
     var id_pre = "";
-    switch(nodeClass)
+    /*switch(nodeClass)
     {
         case 'industry':
             x = 20;
@@ -92,27 +107,55 @@ function drawNodes(nodeData, nodeClass)
             break;
         default:
             break;
-    }
-    node_layer.selectAll("circle." + nodeClass)
+    }*/
+    node = node_layer.selectAll("." + nodeClass)
         .data(nodeData)
-        .enter().append("circle")
-            .attr("id", function(node)
-            {
-                return id_pre + node.id;
-            })
+        .enter().append("g")
             .attr("class", nodeClass)
-            .attr("cx", function(cand)
+            .attr("transform", function(d)
+                {
+                    return "translate(" + d.x + "," + d.y + ")";
+                })
+        .call(d3.behavior.drag()
+            .origin(function(d) { return d; })
+            .on("dragstart", function(){ this.parentNode.appendChild(this); })
+            .on("drag", dragmove));
+
+    node.append("rect")
+        .attr("height", function(d) { return d.dy; })
+        .attr("width", sankey.nodeWidth())
+        .style("fill", function(d)
             {
-                return x;
+                return d.color = color(d.name.replace(/ .*/, ""));
             })
-            .attr("cy", function(d, i)
+        .style("stroke", function(d)
             {
-                return i*25 + 20;
+                return d3.rgb(d.color).darker(2);
             })
-            .attr("r", 0)
-        .transition()
-            .duration(1000)
-            .attr("r", radius);
+        .append("title")
+            .text(function(d)
+                {
+                    return d.name + "\n" + format(d.value);
+                })
+        /*
+                .attr("id", function(node)
+                {
+                    return id_pre + node.id;
+                })
+                .attr("class", nodeClass)
+                .attr("cx", function(cand)
+                {
+                    return x;
+                })
+                .attr("cy", function(d, i)
+                {
+                    return i*25 + 20;
+                })
+                .attr("r", 0)
+            .transition()
+                .duration(1000)
+                .attr("r", radius);
+        */
 }
 
 function drawConnections(connectionData, connectionClass)
@@ -121,7 +164,23 @@ function drawConnections(connectionData, connectionClass)
     var src_pre = "#ind_";
     var dst_pre = "#cand_";
 
-    connection_layer.selectAll("path." + connectionClass)
+    connection_layer.selectAll("." + connectionClass)
+        .data(connectionData)
+        .enter().append("path")
+            .attr("class", connectionClass)
+            .attr("d", path)
+            .style("stroke-width", function(d)
+                { return Math.max(1, d.dy); })
+            .sort(function(a,b)
+                { return b.dy - a.dy; })
+            .append("title")
+                .text(function(d)
+                    {
+                        return d.source.name + "->" +
+                                d.target.name + "\n" +
+                                format(d.value);
+                    });
+    /*
         .data(connectionData)
         .enter().append("path")
             .attr("class", connectionClass)
@@ -149,6 +208,7 @@ function drawConnections(connectionData, connectionClass)
             {
                 return d3color(color_scale(d.percent));
             });
+    */
 }
 
 function drawCurveStart(d, src_pre, target_pre)
@@ -231,16 +291,32 @@ function drawCurve(d, src_pre, target_pre)
     return d3LineLinear(points) + "Z";
 }
 
+function dragmove(d)
+{
+    d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+    sankey.relayout();
+    link.attr("d", path);
+}
+
 /** Initializes how the layering will be handled
  * Note: Order matters
  */
 function initLayers()
 {
-    svg = d3.select("svg");
+    svg = d3.select("svg")
+        .attr("width", width)
+        .attr("height", height);
     connection_layer = svg.append("g")
         .attr("class", "connections");
     node_layer = svg.append("g")
         .attr("class", "nodes");
+
+    sankey = d3.sankey()
+        .size([width, height])
+        .nodeWidth(node_width)
+        .nodePadding(node_padding)
+
+    path = sankey.link();
 }
 
 function setupFunctions()
@@ -256,22 +332,27 @@ function setupFunctions()
     .domain([0, d3.max(industryToCandidates, function(d) {
         return d.percent;
     })]);
+
+    formatNumber = d3.format(",.0f");
+    format = function(d) { return "$" + formatNumber(d); };
+    color = d3.scale.category20();
 }
 
+/** drawSankey: Sets up the sankey object
+ *      with the data
+ **/
 function drawSankey()
 {
-    var sankey = d3.sankey()
-        .size([300, 300])
-        .nodeWidth(15)
-        .nodePadding(10)
-        .nodes(nodeMap)
+    sankey
+        .nodes(d3.map(nodeMap))
         .links(industryToCandidates)
         .layout(32);
-    var path = sankey.link();
+
+    drawConnections(industryToCandidates, "link");
+    drawNodes(d3.values(nodeMap), "node")
 }
 
 /** setup: grabs all the necessary data
- *
  **/
 function setup()
 {
@@ -286,13 +367,13 @@ function setup()
     // Setup functions
     setupFunctions();
 
-    drawNodes(votes, "vote");
+    /*drawNodes(votes, "vote");
     drawNodes(candidates, "candidate");
     drawNodes(industries, "industry");
 
-    drawConnections(industryToCandidates, "ind2cand");
+    drawConnections(industryToCandidates, "ind2cand");*/
 
-    //drawSankey();
+    drawSankey();
 }
 
 setup();
