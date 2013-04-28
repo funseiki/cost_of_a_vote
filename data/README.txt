@@ -36,7 +36,7 @@ You will need to get data from a variety of sources...
   `cd votes`
   `rsync -avz --delete --delete-excluded govtrack.us::govtrackdata/us/113/rolls/ .`
 
-  where the 113 is the cycle of congress you want voting info for.
+  where the 113 is the session of congress you want voting info for.
 
 
 5) Get members of congress from here: https://github.com/unitedstates/congress-legislators
