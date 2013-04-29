@@ -10,11 +10,11 @@ var svg              = null
 var sankey = null;
 
 // Attributes
-var margin       = {top: 1, right:1, bottom: 6, left:1},
-    width        = 960 - margin.left - margin.right,
-    height       = 500 - margin.top - margin.bottom,
+var margin       = {},
+    width        = 0,
+    height       = 0,
     node_width   = 15,
-    node_padding = 10;
+    node_padding = 4;
 
 // Nodes
 var candidates = [],
@@ -33,6 +33,24 @@ var path           = null,
     formatNumber   = null,
     format         = null,
     color          = null;
+
+function getNodeText(node)
+{
+    var title = "";
+    if(node.name)
+    {
+        title = node.name;
+    }
+    else if(node.short_title)
+    {
+        title = node.short_title;
+    }
+    else
+    {
+        title = node.type + node.id;
+    }
+    return title;
+}
 
 function requestData(url, callback)
 {
@@ -221,7 +239,8 @@ function drawNodes(nodeData, nodeClass)
         .append("title")
             .text(function(d)
                 {
-                    return d.name + "\n" + format(d.value);
+                    var title = getNodeText(d);
+                    return title + "\n" + format(d.value);
                 })
     node.append("text")
             .attr("x", -6)
@@ -229,7 +248,7 @@ function drawNodes(nodeData, nodeClass)
             .attr("dy", ".35em")
             .attr("text-anchor", "end")
             .attr("transform", null)
-            .text(function(d) { return d.name; })
+            .text(getNodeText)
         .filter(function(d) { return d.x < width / 2; })
             .attr("x",  6 + sankey.nodeWidth())
             .attr("text-anchor", "start");
@@ -270,6 +289,10 @@ function dragmove(d)
  */
 function initLayers()
 {
+    margin = {top: 1, right:1, bottom: 1, left:1},
+    width = $(window).width() - margin.left - margin.right,
+    height = $(window).width() - margin.top - margin.bottom;
+
     svg = d3.select("#visualization").insert("svg")
         .attr("width", width)
         .attr("height", height);
