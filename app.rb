@@ -79,6 +79,7 @@ end
 def db_client
   @db ||= Mysql2::Client.new(:host => CostOfAVote::Config[:mysql][:hostname],
                 :username => CostOfAVote::Config[:mysql][:username],
+                :password => CostOfAVote::Config[:mysql][:password],
                 :database => CostOfAVote::Config[:mysql][:database])
 end
 
