@@ -1,4 +1,0 @@
-module.exports = {
-  'open_secrets_key': '',
-  'mysql': {'host': '', 'user': '', 'database': ''}
-};
