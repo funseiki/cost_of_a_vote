@@ -22,12 +22,14 @@ module CostOfAVote
     end
 
     def top_contributor_ids(limit = 10)
-      sql = """SELECT contributor_id
-        FROM contributions
+      sql = """SELECT cont.contributor_id
+        FROM contributions cont INNER JOIN candidates cand
+        ON cont.candidate_id = cand.opensecrets_id
+        WHERE cand.thomas_id IS NOT NULL
         GROUP BY contributor_id
         ORDER BY SUM(amount) DESC LIMIT #{limit};"""
 
-      @db.query(sql, :as => :array).to_a.flatten
+      @db.query(sql, :as => :array).to_a.flatten.reject {|id| id.strip.empty?}
     end
 
     def contributors(contributor_ids)
