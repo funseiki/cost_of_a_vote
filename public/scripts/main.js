@@ -36,8 +36,9 @@ var path           = null,
 
 function requestData(url, callback)
 {
+    var location = "/example_data" + url +".json";
     $.ajax({
-        url: url,
+        url: location,
         success: function(data)
         {
             callback(null, data);
@@ -45,17 +46,36 @@ function requestData(url, callback)
     });
 }
 
+/** concatNodes
+ *   Concatenates all the associative arrays together
+ *   nodeList: array of objects
+ *   callback: Function that takes the output
+ **/
+function concatNodes(nodeList, callback)
+{
+    var out = {};
+    for(var i = 0; i < nodeList.length; i++)
+    {
+        var data = nodeList[i];
+        for (var key in data)
+        {
+            out[key] = data[key];
+        }
+    }
+    callback(out);
+}
+
 function getContributorsToCandidates(callback)
 {
     /** source: industry id
      *  target: candidate id
      **/
-    /*requestData('/contributions', function(err, data)
+    requestData('/contributions', function(err, data)
     {
         contributorsToCandidates = data;
         callback();
-    });*/
-    contributorsToCandidates = [
+    });
+    /*contributorsToCandidates = [
         {source: "#ind_" + 0, target: "#cand_" + 2, percent: 20, value: 200}
      ,  {source: "#ind_" + 0, target: "#cand_" + 8, percent: 14, value: 300}
      ,  {source: "#ind_" + 0, target: "#cand_" + 3, percent: 36, value: 200}
@@ -64,17 +84,23 @@ function getContributorsToCandidates(callback)
      ,  {source: "#ind_" + 5, target: "#cand_" + 8, percent: 50, value: 200}
      ,  {source: "#ind_" + 8, target: "#cand_" + 9, percent: 3, value: 200}
     ];
-    callback();
+    callback();*/
 }
 
 function getVotes(callback)
 {
-    /*requestData('/votes', function(err, data)
+    requestData('/votes', function(err, data)
     {
         candidatesToVotes = data;
+        for (var i = 0; i < candidatesToVotes.length; i++)
+        {
+            var link = candidatesToVotes[i];
+            link.vote = link.value;
+            link.value = 10;
+        };
         callback();
-    });*/
-    candidatesToVotes = [
+    });
+    /*candidatesToVotes = [
         {source: "#cand_" + 2, target: "#bill_" + 0, value:10, vote:1}
      ,  {source: "#cand_" + 1, target: "#bill_" + 0, value:10, vote:0}
      ,  {source: "#cand_" + 2, target: "#bill_" + 1, value:10, vote:0}
@@ -86,19 +112,23 @@ function getVotes(callback)
      ,  {source: "#cand_" + 5, target: "#bill_" + 4, value:10, vote:-1}
      ,  {source: "#cand_" + 4, target: "#bill_" + 3, value:10, vote:1}
     ];
-    callback();
+    callback();*/
 }
 
 function getBills(callback)
 {
-    /*requestData('/bills', function(err, data)
+    requestData('/bills', function(err, data)
     {
         bills = data;
+        for(var key in data)
+        {
+            bills[key].type = 'Bill';
+        }
         callback();
-    });*/
+    });
 
     // TODO: Query database for this
-    for(var i = 0; i < 5; i++)
+    /*for(var i = 0; i < 5; i++)
     {
         var bill = {
             name: "bill_" + i,
@@ -108,19 +138,23 @@ function getBills(callback)
         bills.push(bill);
         nodeMap["#bill_" + bill.id] = bill;
     }
-    callback();
+    callback();*/
 }
 
 function getContributors(callback)
 {
-    /*requestData('/contributors', function(err, data)
+    requestData('/contributors', function(err, data)
     {
         contributors = data;
+        for(var key in data)
+        {
+            contributors[key].type = 'Contributor';
+        }
         callback();
-    });*/
+    });
 
     // TODO: Query database for this
-    for (var i = 0; i < 10; i++)
+    /*for (var i = 0; i < 10; i++)
     {
         var ind = {
             name       : 'industry' + i
@@ -132,19 +166,24 @@ function getContributors(callback)
         contributors[i] = ind;
         nodeMap["#ind_" + ind.id] = ind;
     }
-    callback();
+    callback();*/
 }
 
 function getCandidates(callback)
 {
-    /*requestData('/candidates', function(err, data)
+    requestData('/candidates', function(err, data)
     {
-        candidates = data;
+        for(var key in data)
+        {
+            var node = data[key];
+            candidates[node.opensecrets_id] = node;
+            candidates[node.opensecrets_id].type = 'Candidate';
+        }
         callback();
-    });*/
+    });
 
     // TODO: Query database for this
-    for (var i = 0; i < 10; i++)
+    /*for (var i = 0; i < 10; i++)
     {
         var candidate = {
             name: 'candidate' + i
@@ -154,7 +193,7 @@ function getCandidates(callback)
         candidates[i] = candidate;
         nodeMap["#cand_" + candidate.id] = candidate;
     }
-    callback();
+    callback();*/
 }
 
 function drawNodes(nodeData, nodeClass)
@@ -231,7 +270,7 @@ function dragmove(d)
  */
 function initLayers()
 {
-    svg = d3.select("svg")
+    svg = d3.select("#visualization").insert("svg")
         .attr("width", width)
         .attr("height", height);
     connection_layer = svg.append("g")
@@ -280,6 +319,22 @@ function setup()
     drawSankey();
 }
 
+function pruneData(oldLinks, mappings, callback)
+{
+    var new_links = [];
+    for(var i = 0; i < oldLinks.length; i++)
+    {
+        var link = oldLinks[i];
+
+        // Make sure we have all the data to make a link
+        if(mappings[link.source] && mappings[link.target])
+        {
+            new_links.push(link);
+        }
+    }
+    callback(new_links);
+}
+
 function getData(callback)
 {
     // call getters
@@ -293,8 +348,16 @@ function getData(callback)
                 {
                     getVotes(function()
                     {
-                        totalLinks = contributorsToCandidates.concat(candidatesToVotes);
-                        callback();
+                        concatNodes([contributors, candidates, bills], function(nodes)
+                        {
+                            nodeMap = nodes;
+                            var links = contributorsToCandidates.concat(candidatesToVotes);
+                            pruneData(links, nodeMap, function(new_links)
+                            {
+                                totalLinks = new_links;
+                                callback();
+                            });
+                        });
                     });
                 });
             });
@@ -304,10 +367,6 @@ function getData(callback)
 
 $(document).ready(function()
 {
-    $(document).click(function()
-    {
-        alert("Hello!");
-    });
     // Grab the data and run setup
     getData(function()
     {
