@@ -1,7 +1,7 @@
 .DS_Store
 config.js
 node_modules
-.rbenv-gemset
+.rbenv-gemsets
 .rbenv-version
 Gemfile.lock
 config.rb
