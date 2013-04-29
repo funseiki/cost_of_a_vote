@@ -274,8 +274,6 @@ function setup()
 {
     initLayers();
 
-    totalLinks = contributorsToCandidates.concat(candidatesToVotes);
-
     // Setup functions
     setupFunctions();
 
@@ -295,6 +293,7 @@ function getData(callback)
                 {
                     getVotes(function()
                     {
+                        totalLinks = contributorsToCandidates.concat(candidatesToVotes);
                         callback();
                     });
                 });
@@ -305,6 +304,10 @@ function getData(callback)
 
 $(document).ready(function()
 {
+    $(document).click(function()
+    {
+        alert("Hello!");
+    });
     // Grab the data and run setup
     getData(function()
     {
