@@ -41,9 +41,11 @@ module CostOfAVote
     end
 
     def candidate_ids_contributed_to(contributor_ids, limit = 10)
-      sql = """SELECT DISTINCT(candidate_id)
-        FROM contributions
-        WHERE contributor_id IN (#{DB::ids_to_list(contributor_ids)})
+      sql = """SELECT DISTINCT(cont.candidate_id)
+        FROM contributions cont INNER JOIN candidates cand
+        ON cont.candidate_id = cand.opensecrets_id
+        WHERE cont.contributor_id IN (#{DB::ids_to_list(contributor_ids)})
+        AND cand.thomas_id IS NOT NULL
         LIMIT #{limit};"""
 
       @db.query(sql, :as => :array).to_a.flatten
