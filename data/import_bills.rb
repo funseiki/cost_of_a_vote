@@ -20,10 +20,10 @@ CostOfAVote::CreateTableSql = [
 
    """CREATE TABLE IF NOT EXISTS votes (
     bill_id varchar(12) NOT NULL,
-    thomas_id int,
+    govtrack_id int,
     status varchar(1) NOT NULL,
     KEY (bill_id),
-    KEY (thomas_id),
+    KEY (govtrack_id),
     KEY (status)
   ) ENGINE=InnoDB;"""
 ]
@@ -78,7 +78,7 @@ def import_votes
 
     voters = xml_doc.xpath("//voter")
     voters.each do |voter|
-      record = {:bill_id => bill_id, :status => voter["vote"], :thomas_id => voter["id"]}
+      record = {:bill_id => bill_id, :status => voter["vote"], :govtrack_id => voter["id"]}
 
       insert_record("votes", record)
     end
