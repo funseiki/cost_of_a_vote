@@ -3,6 +3,15 @@ require 'mysql2'
 require 'json'
 require './config.rb'
 
+get '/example_data/:filename' do
+  content_type 'application/json'
+  begin
+    File.read(Dir["public/example_data/#{params[:filename]}"])
+  rescue
+    nil
+  end
+end
+
 get '/candidates' do
   sql = congress_members_sql
   results = {}
