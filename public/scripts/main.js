@@ -79,7 +79,7 @@ function getLinkText(node)
 
 function requestData(url, callback)
 {
-    var location = "/example_data" + url +".json";
+    var location = "/data" + url +".json";
     $.ajax({
         url: location,
         success: function(data)
@@ -289,7 +289,15 @@ function drawConnections(connectionData, connectionClass)
     connection = connection_layer.selectAll("." + connectionClass)
         .data(connectionData)
         .enter().append("path")
-            .attr("class", connectionClass)
+            .attr("class", function(d)
+                {
+                    var linkType = "money";
+                    if(d.vote)
+                    {
+                        linkType = "vote"
+                    }
+                    return connectionClass + " " + linkType;
+                })
             .attr("d", path)
             .style("stroke", function(d)
                 {
@@ -335,7 +343,7 @@ function dragmove(d)
  */
 function initLayers()
 {
-    margin = {top: 1, right:1, bottom: 1, left:1},
+    margin = {top: 10, right:20, bottom: 30, left:10},
     width = $(window).width() - margin.left - margin.right,
     height = $(window).height() - margin.top - margin.bottom;
 
