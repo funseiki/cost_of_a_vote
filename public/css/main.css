@@ -1,8 +1,12 @@
 .node {
     opacity: 1.0;
+    background-color:rgb(242,206,182);
 }
 .node:hover {
     opacity: 0.7;
+}
+text::selection {
+    background-color:rgb(242,206,182);
 }
 
 .link {
@@ -14,15 +18,15 @@
 }
 
 .vote-yes {
-    stroke: #00FF00;
+    stroke: rgb(119,216, 142);
 }
 
 .vote-no {
-    stroke: #FF0000;
+    stroke: rgb(255, 102, 102);
 }
 
 .voteless {
-    stroke: #000000;
+    stroke: rgb(56,56,56);
 }
 
 .money {
