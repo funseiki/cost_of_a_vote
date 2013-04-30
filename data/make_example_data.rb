@@ -64,15 +64,16 @@ module CostOfAVote
     end
 
     def contributions(contributor_ids, candidate_ids)
-      sql = """SELECT * FROM contributions
+      sql = """SELECT *, SUM(amount) FROM contributions
         WHERE candidate_id IN (#{DB::ids_to_list(candidate_ids)})
-        AND contributor_id IN (#{DB::ids_to_list(contributor_ids)});"""
+        AND contributor_id IN (#{DB::ids_to_list(contributor_ids)})
+        GROUP BY contributor_id, candidate_id;"""
 
       contributions = @db.query(sql).map do |h|
         {
           :source => h["contributor_id"],
           :target => h["candidate_id"],
-          :value => h["amount"]
+          :value => h["SUM(amount)"]
         }
       end
 
