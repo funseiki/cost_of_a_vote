@@ -292,29 +292,25 @@ function drawConnections(connectionData, connectionClass)
             .attr("class", function(d)
                 {
                     var linkType = "money";
-                    if(d.vote)
-                    {
-                        linkType = "vote"
-                    }
-                    return connectionClass + " " + linkType;
-                })
-            .attr("d", path)
-            .style("stroke", function(d)
-                {
-                    var col = "#000000"
+                    var voteType = "voteless";
                     switch(d.vote)
                     {
                         case "+":
-                            col = "#00FF00"
+                            linkType = "vote"
+                            voteType = "vote-yes";
                             break;
                         case "-":
-                            col = "#FF0000"
+                            linkType = "vote"
+                            voteType = "vote-no";
                             break;
                         default:
+                            voteType = "voteless";
+                            linkType = "money";
                             break;
                     }
-                    return col;
+                    return connectionClass + " " + linkType + " " + voteType;
                 })
+            .attr("d", path)
             .style("stroke-width", function(d)
                 { return Math.max(1, d.dy); })
             .sort(function(a,b)

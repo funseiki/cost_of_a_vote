@@ -13,24 +13,22 @@
     stroke-opacity: 0.4;
 }
 
+.vote-yes {
+    stroke: #00FF00;
+}
+
+.vote-no {
+    stroke: #FF0000;
+}
+
+.voteless {
+    stroke: #000000;
+}
+
 .money {
     stroke-opacity: 0.2;
 }
 
 .link:hover {
     stroke-opacity: 0.1;
-}
-
-
-.candidate {
-    fill: rgba(20, 100, 30, 1);
-}
-
-.industry {
-    fill: rgba(200, 10, 30, 1);
-}
-
-.ind2cand {
-    stroke: rgba(255, 255, 255, .5);
-    stroke-width: 1.5;
 }
