@@ -6,7 +6,7 @@ require './config.rb'
 get '/data/:filename' do
   content_type 'application/json'
   begin
-    File.read(Dir["public/example_data/#{params[:filename]}"])
+    File.read(File.join('public', 'example_data', params[:filename]))
   rescue
     nil
   end
