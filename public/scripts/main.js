@@ -343,7 +343,7 @@ function dragmove(d)
  */
 function initLayers()
 {
-    margin = {top: 1, right:1, bottom: 1, left:1},
+    margin = {top: 10, right:20, bottom: 30, left:10},
     width = $(window).width() - margin.left - margin.right,
     height = $(window).height() - margin.top - margin.bottom;
 
