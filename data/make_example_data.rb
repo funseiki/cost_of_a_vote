@@ -22,10 +22,11 @@ module CostOfAVote
     end
 
     def top_contributor_ids(limit = 10)
-      sql = """SELECT cont.contributor_id
-        FROM contributions cont INNER JOIN candidates cand
-        ON cont.candidate_id = cand.opensecrets_id
-        WHERE cand.thomas_id IS NOT NULL
+      sql = """SELECT co.contributor_id
+        FROM contributions co INNER JOIN candidates ca
+        ON co.candidate_opensecrets_id = ca.opensecrets_id
+        WHERE ca.thomas_id IS NOT NULL
+        AND co.type IN ('24C', '24F', '24K', '24Z')
         GROUP BY contributor_id
         ORDER BY SUM(amount) DESC LIMIT #{limit};"""
 
@@ -43,11 +44,12 @@ module CostOfAVote
     end
 
     def candidate_ids_contributed_to(contributor_ids, limit = 10)
-      sql = """SELECT DISTINCT(cont.candidate_id)
-        FROM contributions cont INNER JOIN candidates cand
-        ON cont.candidate_id = cand.opensecrets_id
-        WHERE cont.contributor_id IN (#{DB::ids_to_list(contributor_ids)})
-        AND cand.thomas_id IS NOT NULL
+      sql = """SELECT DISTINCT(co.candidate_opensecrets_id)
+        FROM contributions co INNER JOIN candidates ca
+        ON co.candidate_opensecrets_id = ca.opensecrets_id
+        WHERE co.contributor_id IN (#{DB::ids_to_list(contributor_ids)})
+        AND ca.thomas_id IS NOT NULL
+        AND co.type IN ('24C', '24F', '24K', '24Z')
         LIMIT #{limit};"""
 
       @db.query(sql, :as => :array).to_a.flatten
@@ -65,14 +67,15 @@ module CostOfAVote
 
     def contributions(contributor_ids, candidate_ids)
       sql = """SELECT *, SUM(amount) FROM contributions
-        WHERE candidate_id IN (#{DB::ids_to_list(candidate_ids)})
+        WHERE candidate_opensecrets_id IN (#{DB::ids_to_list(candidate_ids)})
         AND contributor_id IN (#{DB::ids_to_list(contributor_ids)})
-        GROUP BY contributor_id, candidate_id;"""
+        AND type IN ('24C', '24F', '24K', '24Z')
+        GROUP BY contributor_id, candidate_opensecrets_id;"""
 
       contributions = @db.query(sql).map do |h|
         {
           :source => h["contributor_id"],
-          :target => h["candidate_id"],
+          :target => h["candidate_opensecrets_id"],
           :value => h["SUM(amount)"]
         }
       end
