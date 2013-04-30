@@ -79,7 +79,7 @@ function getLinkText(node)
 
 function requestData(url, callback)
 {
-    var location = "/example_data" + url +".json";
+    var location = "/data" + url +".json";
     $.ajax({
         url: location,
         success: function(data)
