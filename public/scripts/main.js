@@ -13,8 +13,8 @@ var sankey = null;
 var margin       = {},
     width        = 0,
     height       = 0,
-    node_width   = 15,
-    node_padding = 4;
+    node_width   = 30,
+    node_padding = 14;
 
 // Nodes
 var candidates = [],
@@ -50,6 +50,31 @@ function getNodeText(node)
         title = node.type + node.id;
     }
     return title;
+}
+
+function getLinkText(node)
+{
+    var retStr = "";
+    if(node.vote)
+    {
+        retStr = "No vote";
+        switch(node.vote)
+        {
+            case "+":
+                retStr = "Voted for the bill"
+            break;
+            case "-":
+                retStr = "Voted against the bill"
+            break;
+            default:
+                break;
+        }
+    }
+    else
+    {
+        retStr = format(node.value);
+    }
+    return retStr;
 }
 
 function requestData(url, callback)
@@ -240,7 +265,11 @@ function drawNodes(nodeData, nodeClass)
             .text(function(d)
                 {
                     var title = getNodeText(d);
-                    return title + "\n" + format(d.value);
+                    if(d.type != "Bill")
+                    {
+                        title += "\n" + format(d.value);
+                    }
+                    return title;
                 })
     node.append("text")
             .attr("x", -6)
@@ -262,6 +291,22 @@ function drawConnections(connectionData, connectionClass)
         .enter().append("path")
             .attr("class", connectionClass)
             .attr("d", path)
+            .style("stroke", function(d)
+                {
+                    var col = "#000000"
+                    switch(d.vote)
+                    {
+                        case "+":
+                            col = "#00FF00"
+                            break;
+                        case "-":
+                            col = "#FF0000"
+                            break;
+                        default:
+                            break;
+                    }
+                    return col;
+                })
             .style("stroke-width", function(d)
                 { return Math.max(1, d.dy); })
             .sort(function(a,b)
@@ -269,9 +314,10 @@ function drawConnections(connectionData, connectionClass)
     connection.append("title")
             .text(function(d)
                 {
-                    return d.source.name + "->" +
-                            d.target.name + "\n" +
-                            format(d.value);
+                    return getNodeText(d.source) + "->" +
+                            getNodeText(d.target) + "\n" +
+                            getLinkText(d);
+                            //format(d.value);
                 });
 }
 
@@ -291,11 +337,11 @@ function initLayers()
 {
     margin = {top: 1, right:1, bottom: 1, left:1},
     width = $(window).width() - margin.left - margin.right,
-    height = $(window).width() - margin.top - margin.bottom;
+    height = $(window).height() - margin.top - margin.bottom;
 
     svg = d3.select("#visualization").insert("svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height + 50);
     connection_layer = svg.append("g")
         .attr("class", "connections");
     node_layer = svg.append("g")
