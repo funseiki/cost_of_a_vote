@@ -289,7 +289,15 @@ function drawConnections(connectionData, connectionClass)
     connection = connection_layer.selectAll("." + connectionClass)
         .data(connectionData)
         .enter().append("path")
-            .attr("class", connectionClass)
+            .attr("class", function(d)
+                {
+                    var linkType = "money";
+                    if(d.vote)
+                    {
+                        linkType = "vote"
+                    }
+                    return connectionClass + " " + linkType;
+                })
             .attr("d", path)
             .style("stroke", function(d)
                 {
@@ -306,17 +314,6 @@ function drawConnections(connectionData, connectionClass)
                             break;
                     }
                     return col;
-                })
-            .style("stroke-opacity", function(d)
-                {
-                    if(d.vote)
-                    {
-                        return "0.4";
-                    }
-                    else
-                    {
-                        return "0.2";
-                    }
                 })
             .style("stroke-width", function(d)
                 { return Math.max(1, d.dy); })

@@ -3,13 +3,20 @@ svg .node {
 
 .link {
     fill: none;
-    stroke: #000;
-    stroke-opacity: .1;
 }
 
 .vote {
-    fill: rgba(20, 0, 30, 1);
+    stroke-opacity: 0.5;
 }
+
+.money {
+    stroke-opacity: 0.2;
+}
+
+.link:hover {
+    stroke-opacity: 0.1;
+}
+
 
 .candidate {
     fill: rgba(20, 100, 30, 1);
