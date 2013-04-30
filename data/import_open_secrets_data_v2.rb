@@ -15,6 +15,7 @@ CostOfAVote::CreateTableSql = [
      name varchar(255) NOT NULL,
      PRIMARY KEY (id)
    ) ENGINE=InnoDB;""",
+
    """CREATE TABLE IF NOT EXISTS contributors (
     id varchar(12) NOT NULL,
     industry_id varchar(5),
@@ -22,6 +23,7 @@ CostOfAVote::CreateTableSql = [
     PRIMARY KEY (id),
     KEY (industry_id)
   ) ENGINE=InnoDB;""",
+
   """CREATE TABLE IF NOT EXISTS candidates (
     opensecrets_id varchar(9) NOT NULL,
     thomas_id int,
@@ -33,24 +35,37 @@ CostOfAVote::CreateTableSql = [
     KEY(govtrack_id),
     KEY(party)
   ) ENGINE=InnoDB AUTO_INCREMENT=1;""",
+
   """CREATE TABLE IF NOT EXISTS contributions (
-    candidate_id varchar(9),
+    cycle smallint unsigned,
+    candidate_opensecrets_id varchar(9),
     contributor_id varchar(12),
     industry_id varchar(5),
-    amount int unsigned,
-    KEY (candidate_id),
-    FOREIGN KEY (contributor_id) REFERENCES contributors(id),
+    amount int,
+    type varchar(3),
+    KEY (candidate_opensecrets_id),
+    KEY (contributor_id),
     KEY (industry_id)
   ) ENGINE=InnoDB;""",
 
   # This table is temporary for individual contributions, the contributors from
   # it will be loaded into contributor, and the contributions into contribution
   """CREATE TABLE IF NOT EXISTS individual_contributions (
-    contributor_id varchar(12),
-    contributor_name varchar(255),
-    candidate_id varchar(9),
+    cycle smallint unsigned NOT NULL,
+    individual_id varchar(12),
+    individual_name varchar(255),
+    candidate_opensecrets_id varchar(9),
     industry_id varchar(5),
-    amount int unsigned
+    amount int
+  ) ENGINE=InnoDB;""",
+
+  """CREATE TABLE IF NOT EXISTS pac_contributions (
+    cycle smallint unsigned NOT NULL,
+    pac_id varchar(12) NOT NULL,
+    candidate_opensecrets_id varchar(9) NOT NULL,
+    amount int,
+    industry_id varchar(5),
+    type varchar(3)
   ) ENGINE=InnoDB;"""
 ]
 CostOfAVote::LoadDataSql = [
@@ -66,27 +81,33 @@ CostOfAVote::LoadDataSql = [
   (@dummy, id, name, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, industry_id,
   @dummy, @dummy, @dummy, @dummy);""",
 
-  # Load PAC contributions into the contributions table
-  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE contributions
+  # Load PAC contributions into the pac_contributions table
+  """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/pacs12.txt' INTO TABLE pac_contributions
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
-  (@dummy, @dummy, contributor_id, candidate_id, amount, @dummy, industry_id, @dummy, @dummy, @dummy);""",
+  (cycle, @dummy, pac_id, candidate_opensecrets_id, amount, @dummy, industry_id, type, @dummy, @dummy);""",
+
+  # Load pac_contributions into the contributions table
+  """INSERT INTO contributions (cycle, candidate_opensecrets_id, contributor_id, industry_id, amount, type)
+  SELECT cycle, candidate_opensecrets_id, pac_id, industry_id, amount, type
+  FROM pac_contributions;"""
 
   # Load individual contributions into the individual_contributions table
   """LOAD DATA INFILE '#{FILEPATH}/open_secrets_data/indivs12.txt' INTO TABLE individual_contributions
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '|' LINES TERMINATED BY '\r\n'
-  (@dummy, @dummy, contributor_id, contributor_name, candidate_id, @dummy,
+  (cycle, @dummy, individual_id, individual_name, candidate_opensecrets_id, @dummy,
   @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);""",
 
   # For every contribution direct to candidate, add that to the contributions
   # table
   """REPLACE INTO contributors (id, industry_id, name)
-  SELECT contributor_id, industry_id, contributor_name
-  FROM individual_contributions WHERE candidate_id LIKE 'N%';""",
+  SELECT individual_id, industry_id, individual_name
+  FROM individual_contributions WHERE candidate_opensecrets_id LIKE 'N%';""",
 
-  """INSERT INTO contributions (candidate_id, contributor_id, industry_id, amount)
-  SELECT candidate_id, contributor_id, industry_id, amount
-  FROM individual_contributions WHERE candidate_id LIKE 'N%';"""
+  # 24K is a direct contribution
+  """INSERT INTO contributions (cycle, candidate_opensecrets_id, contributor_id, industry_id, amount, type)
+  SELECT cycle, candidate_opensecrets_id, individual_id, industry_id, amount, '24K'
+  FROM individual_contributions WHERE candidate_opensecrets_id LIKE 'N%';"""
 ]
 
 def create_tables
