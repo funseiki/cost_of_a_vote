@@ -307,6 +307,17 @@ function drawConnections(connectionData, connectionClass)
                     }
                     return col;
                 })
+            .style("stroke-opacity", function(d)
+                {
+                    if(d.vote)
+                    {
+                        return "0.4";
+                    }
+                    else
+                    {
+                        return "0.2";
+                    }
+                })
             .style("stroke-width", function(d)
                 { return Math.max(1, d.dy); })
             .sort(function(a,b)
