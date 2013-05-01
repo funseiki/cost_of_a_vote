@@ -50,4 +50,13 @@ module CostOfAVote
     end
   end
 
+  class Candidate < Base
+    # TODO this is using thomas_id as an indicator as they are a legislator when
+    # we add in a legislators table, this will need to change
+    def self.current_legislators
+      sql = "SELECT * FROM candidates WHERE thomas_id IS NOT NULL;";
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
 end
