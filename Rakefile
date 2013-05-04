@@ -6,48 +6,67 @@ namespace :static do
     FileUtils.mkdir_p(File.join('public', 'data'))
   end
 
-  task :legislator_autocomplete => [:ensure_destination_directory] do
-    legislators = CostOfAVote::Candidate.current_legislators.map do |legislator|
-      {:label => legislator[:name],
-       :value => legislator[:opensecrets_id]}
-    end
-
-    path = File.join('public', 'data', 'legislator_autocomplete.json')
-    f = File.open(path, 'w+')
-    JSON.dump(legislators, f)
+  task :legislators_autocomplete => [:ensure_destination_directory] do
+    generate_node_autocomplete('legislators_autocomplete.json',
+                               CostOfAVote::Candidate.current_legislators,
+                               :name, :opensecrets_id)
   end
 
-  # generates a static json file with all the current legislators for use on the
-  # sankey plugin. Format is [{opensecrets_id => {leglislator attributes}}]
   task :legislators => [:ensure_destination_directory] do
-    legislators = {}
-    CostOfAVote::Candidate.current_legislators.each do |legislator|
-      legislators[legislator[:opensecrets_id]] = legislator
-    end
+    generate_node_json('legislators.json',
+                       CostOfAVote::Candidate.current_legislators,
+                       :opensecrets_id)
+  end
 
-    path = File.join('public', 'data', 'legislators.json')
-    f = File.open(path, 'w+')
-    JSON.dump(legislators, f)
+  task :contributors_autocomplete => [:ensure_destination_directory] do
+    contributors =
+      CostOfAVote::Contributor.top_contributors_for_legislators(50000)
+    generate_node_autocomplete(
+      'contributors_autocomplete.json', contributors, :name, :id)
   end
 
   # generates a static json file for the top 50,000 contributors
   task :contributors => [:ensure_destination_directory] do
-    contributors = CostOfAVote::Contributor.top_contributors_for_legislators(50000)
+    contributors =
+      CostOfAVote::Contributor.top_contributors_for_legislators(50000)
+    generate_node_json('contributors.json', contributors, :id)
+  end
 
-    path = File.join('public', 'data', 'contributors.json')
-    f = File.open(path, 'w+')
-    JSON.dump(contributors.to_a, f)
+  task :bills_autocomplete => [:ensure_destination_directory] do
+    generate_node_autocomplete(
+      'bills_autocomplete.json', CostOfAVote::Bill.all, :official_title, :id)
   end
 
   task :bills => [:ensure_destination_directory] do
-    bills = {}
-    CostOfAVote::Bill.all.each do |bill|
-      bills[bill[:id]] = bill
-    end
-
-    path = File.join('public', 'data', 'bills.json')
-    f = File.open(path, 'w+')
-    JSON.dump(bills, f)
+    generate_node_json('bills.json', CostOfAVote::Bill.all, :id)
   end
 
+  task :all =>  [:legislators_autocomplete, :legislators,
+    :contributors_autocomplete, :contributors,
+    :bills_autocomplete, :bills]
+
+end
+
+# generates a static json file with node information for the sankey plugin
+# Format is {id => {item attributes}}
+def generate_node_json(filename, items, id_key)
+    items_lookup = {}
+    items.each do |item|
+      items_lookup[item[id_key]] = item
+    end
+
+    path = File.join('public', 'data', filename)
+    f = File.open(path, 'w+')
+    JSON.dump(items_lookup, f)
+end
+
+def generate_node_autocomplete(filename, items, label_id, value_id)
+  autocomplete_data = items.map do |item|
+    {:label => item[label_id],
+     :value => item[value_id]}
+  end
+
+  path = File.join('public', 'data', filename)
+  f = File.open(path, 'w+')
+  JSON.dump(autocomplete_data, f)
 end
