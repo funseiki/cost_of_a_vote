@@ -39,4 +39,15 @@ namespace :static do
     JSON.dump(contributors.to_a, f)
   end
 
+  task :bills => [:ensure_destination_directory] do
+    bills = {}
+    CostOfAVote::Bill.all.each do |bill|
+      bills[bill[:id]] = bill
+    end
+
+    path = File.join('public', 'data', 'bills.json')
+    f = File.open(path, 'w+')
+    JSON.dump(bills, f)
+  end
+
 end

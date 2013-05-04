@@ -69,8 +69,15 @@ module CostOfAVote
         IN (#{DB::ids_to_list(legislator_ids)})
         GROUP BY contributors.id
         ORDER BY COUNT(*) DESC
-        LIMIT #{count}"""
+        LIMIT #{count};"""
 
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
+  class Bill < Base
+    def self.all
+      sql = """SELECT * from bills;"
       db.query(sql, :as => :hash, :symbolize_keys => true)
     end
   end
