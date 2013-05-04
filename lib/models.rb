@@ -59,4 +59,20 @@ module CostOfAVote
     end
   end
 
+  class Contributor < Base
+    def self.top_contributors_for_legislators(count)
+      legislator_ids = Candidate.current_legislators.map {|l| l[:opensecrets_id]}
+      sql = """SELECT contributors.*
+        FROM contributors INNER JOIN contributions
+        ON contributors.id = contributions.contributor_id
+        WHERE contributions.candidate_opensecrets_id
+        IN (#{DB::ids_to_list(legislator_ids)})
+        GROUP BY contributors.id
+        ORDER BY COUNT(*) DESC
+        LIMIT #{count}"""
+
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
 end

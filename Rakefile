@@ -30,4 +30,13 @@ namespace :static do
     JSON.dump(legislators, f)
   end
 
+  # generates a static json file for the top 50,000 contributors
+  task :contributors => [:ensure_destination_directory] do
+    contributors = CostOfAVote::Contributor.top_contributors_for_legislators(50000)
+
+    path = File.join('public', 'data', 'contributors.json')
+    f = File.open(path, 'w+')
+    JSON.dump(contributors.to_a, f)
+  end
+
 end
