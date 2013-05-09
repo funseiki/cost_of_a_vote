@@ -23,13 +23,6 @@
         <div class="header-container">
             <header class="wrapper clearfix">
                 <h1 class="title">h1.title</h1>
-                <nav>
-                    <ul>
-                        <li><a href="#">nav ul li a</a></li>
-                        <li><a href="#">nav ul li a</a></li>
-                        <li><a href="#">nav ul li a</a></li>
-                    </ul>
-                </nav>
             </header>
         </div>
 
@@ -42,12 +35,57 @@
                         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec.</p>
                     </header>
                     <section>
-                        <h2>article section h2</h2>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor. Etiam ullamcorper lorem dapibus velit suscipit ultrices. Proin in est sed erat facilisis pharetra.</p>
+                        <h2>Motivation</h2>
+                        <p>One might wonder why a company would aid potential political candidates unless it had some something to gain from their winning. COV was an initial attempt at visualizing a correlation between how money went from a company to a candidate, and how that might ultimately affect how this candidate voted on bills.</p>
                     </section>
                     <section>
-                        <h2>article section h2</h2>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor. Etiam ullamcorper lorem dapibus velit suscipit ultrices. Proin in est sed erat facilisis pharetra.</p>
+                        <h2>Audience</h2>
+                        <p>COV is for people who are interested in the American legislative system but do not necessarily have the background to analyze what’s going on.</p>
+                    </section>
+                    <section>
+                        <h2>Goal</h2>
+                        <p>Cost of a Vote is a project that aims to make clear correlations between where a political candidate’s campaign finances come from and how it ultimately affects the way she votes on a bill.</p>
+                    </section>
+                    <section>
+                        <h2>Wanted Patterns</h2>
+                        <p>We wanted to easy to consume visualization that showed the link between campaign contributions and subsequent votes.</p>
+                    </section>
+                    <section>
+                        <h2>Found Patterns</h2>
+                        <p>
+We soon found the space was a lot more subtle than expected, as my friend Saied put it:
+
+//TODO saied said he’d rewrite this quote so it flows better (It’s pretty good as it is //though)
+ "Its not just about campaign contributions directly...
+there are indirect contributions through dark money groups...
+super pacs bribery also takes the form of the "revolving door," in which
+politicians are guaranteed high paying jobs in the private sector if they carry
+out certain agendas...
+there is always a threat of supporting the other candidate, the opponent...
+all of these then go into influencing how a politician votes
+BUT TO MAKE THINGS EVEN MORE RIDICULOUS
+political candidates are in effect vetted by big business. That is to say that
+generally speaking the political candidates who are willing to play the game are
+the ones that are even allowed to run for office in the first place..."
+Essentially just looking at money and votes may be interesting but it’s not telling the full story. Furthermore the data is dense enough that it’s hard to understand without pruning, but the process of pruning itself can, and does, lead to biases within the visualization.
+                        </p>
+                    </section>
+                    <section>
+                        <h2>Implementation</h2>
+                        <p>
+Data Sources:
+Campaign contributions and candidates: OpenSecrets (opensecrets.org)
+Bills: UnitedStates/congress (https://github.com/unitedstates/congress)
+Legislators: UnitedStates/congress-legislators (https://github.com/unitedstates/congress-legislators)
+Votes: govtrack (http://www.govtrack.us/developers/data)
+
+
+Front-end choices:
+D3.js (along with HTML, Javascript, CSS) and the Sankey Plugin for D3. We went with D3, because it offered flexibility using Scalable Vector Graphics. Having the ability to scale up and down was useful in our implementation as there was the potential to have a lot of data appear on the screen at once.
+
+The Sankey Diagram was our choice for visualizing the data. Instead of having all links be a fixed width, as is the case with standard flow diagrams, a Sankey diagram normalizes link values by representing them as a percent of the sum of all links. Link widths are determined using these percentages.
+
+                        </p>
                     </section>
                     <footer>
                         <h3>article footer h3</h3>
