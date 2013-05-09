@@ -1,0 +1,22 @@
+/* Make blockquotes sexy: style taken from http://html5doctor.com/blockquote-q-cite/ */
+blockquote::before {
+  display: block;
+  height: 0;
+  content: "“";
+  margin-left: -.95em;
+  font-style: italic;
+  font-size: 400%;
+  color: #999; }
+blockquote {
+  -webkit-box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  border-left: 0.5em solid #DDD;
+  font-size: 1em;
+  line-height: 1.5;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-left: 16px;
+  padding-right: 8px;
+  margin: 1.5em 0px .75em -1.5em; }
+
