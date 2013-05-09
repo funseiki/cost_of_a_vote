@@ -33,6 +33,19 @@ module CostOfAVote
       @db.query(sql, :as => :array).to_a.flatten.reject {|id| id.strip.empty?}
     end
 
+    def top_contributors_for_candidates(candidate_ids, limit = 10)
+      sql = """SELECT co.contributor_id
+        FROM contributions co INNER JOIN candidates ca
+        ON co.candidate_opensecrets_id = ca.opensecrets_id
+        WHERE ca.thomas_id IS NOT NULL
+        AND co.type IN ('24C', '24F', '24K', '24Z')
+        AND co.candidate_opensecrets_id IN (#{DB::ids_to_list(candidate_ids)})
+        GROUP BY contributor_id
+        ORDER BY SUM(amount) DESC LIMIT #{limit};"""
+
+      @db.query(sql, :as => :array).to_a.flatten.reject {|id| id.strip.empty?}
+    end
+
     def contributors(contributor_ids)
       sql = "SELECT * FROM contributors WHERE id IN (#{DB::ids_to_list(contributor_ids)});";
       contributors = {}
@@ -83,13 +96,22 @@ module CostOfAVote
       contributions
     end
 
-    def bills(candidate_ids, limit = 10)
-      sql = """SELECT distinct(b.id), b.official_title, b.short_title
-        FROM votes v INNER JOIN bills b
-        ON v.bill_id = b.id INNER JOIN candidates c
+    def voted_on_bill_ids(candidate_ids, limit = 10)
+      sql = """SELECT v.bill_id
+        FROM votes v INNER JOIN candidates c
         ON v.govtrack_id = c.govtrack_id
-        WHERE c.opensecrets_id IN (#{DB::ids_to_list(candidate_ids)})
-        ORDER BY b.id DESC LIMIT #{limit};"""
+        WHERE c.opensecrets_id  IN (#{DB::ids_to_list(candidate_ids)})
+        GROUP BY v.bill_id
+        ORDER BY count(*) DESC
+        LIMIT #{limit};"""
+
+      @db.query(sql, :as => :array).to_a.flatten
+    end
+
+    def bills(bill_ids, limit = 10)
+      sql = """SELECT * FROM bills
+      WHERE id IN (#{DB::ids_to_list(bill_ids)})
+      LIMIT #{limit};"""
 
       bills = {}
       @db.query(sql, :as => :hash).each do |bill|
@@ -120,13 +142,20 @@ module CostOfAVote
 end
 
 example_data = CostOfAVote::ExampleData.new()
-contributor_ids = example_data.top_contributor_ids
-candidate_ids = example_data.candidate_ids_contributed_to(contributor_ids)
+#contributor_ids = example_data.top_contributor_ids
+#candidate_ids = example_data.candidate_ids_contributed_to(contributor_ids)
+
+
+candidate_ids =  ["N00003675", "N00007360" , "N00000826", "N00025413", "N00031401", "N00028986"]
+contributor_ids = example_data.top_contributors_for_candidates(candidate_ids)
+bill_ids = example_data.voted_on_bill_ids(candidate_ids)
 puts "have top contributors and candidate ids"
 
 candidates = example_data.candidates(candidate_ids)
 contributors = example_data.contributors(contributor_ids)
-bills = example_data.bills(candidate_ids)
+#bills = example_data.bills(candidate_ids)
+bills = example_data.bills(bill_ids)
+
 contributions = example_data.contributions(contributor_ids, candidate_ids)
 votes = example_data.votes(candidate_ids, bills.keys)
 puts "preparing to dump!"

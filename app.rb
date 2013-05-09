@@ -2,6 +2,10 @@ require 'sinatra'
 require 'json'
 require './lib/models.rb'
 
+get '/' do
+  File.read(File.join('public', 'index.html'))
+end
+
 get '/data/:filename' do
   content_type 'application/json'
   begin
