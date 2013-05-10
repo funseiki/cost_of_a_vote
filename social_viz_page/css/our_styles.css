@@ -19,4 +19,8 @@ blockquote {
   padding-left: 16px;
   padding-right: 8px;
   margin: 1.5em 0px .75em -1.5em; }
-
+.down-arrow {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 20px;}
