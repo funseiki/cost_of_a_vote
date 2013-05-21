@@ -50,4 +50,36 @@ module CostOfAVote
     end
   end
 
+  class Candidate < Base
+    # TODO this is using thomas_id as an indicator as they are a legislator when
+    # we add in a legislators table, this will need to change
+    def self.current_legislators
+      sql = "SELECT * FROM candidates WHERE thomas_id IS NOT NULL;";
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
+  class Contributor < Base
+    def self.top_contributors_for_legislators(count)
+      legislator_ids = Candidate.current_legislators.map {|l| l[:opensecrets_id]}
+      sql = """SELECT contributors.*
+        FROM contributors INNER JOIN contributions
+        ON contributors.id = contributions.contributor_id
+        WHERE contributions.candidate_opensecrets_id
+        IN (#{DB::ids_to_list(legislator_ids)})
+        GROUP BY contributors.id
+        ORDER BY COUNT(*) DESC
+        LIMIT #{count};"""
+
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
+  class Bill < Base
+    def self.all
+      sql = """SELECT * from bills;"
+      db.query(sql, :as => :hash, :symbolize_keys => true)
+    end
+  end
+
 end

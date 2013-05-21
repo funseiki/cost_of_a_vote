@@ -5,6 +5,7 @@ node_modules
 .rbenv-version
 Gemfile.lock
 config.rb
+public/data/
 cands12.txt
 indivs12.txt
 pacs12.txt
