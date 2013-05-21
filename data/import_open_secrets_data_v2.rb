@@ -98,6 +98,7 @@ CostOfAVote::LoadDataSql = [
   @dummy, industry_id, @dummy, amount, @dummy, @dummy, @dummy, @dummy, @dummy,
   @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy, @dummy);""",
 
+  # TODO instead of this you could also just use a view...
   # For every contribution direct to candidate, add that to the contributions
   # table
   """REPLACE INTO contributors (id, industry_id, name)
@@ -125,6 +126,7 @@ def insert_record(table, record)
   stmnt.execute(*record.values)
 end
 
+#TODO it's actually a tab delimitted, csv, just use load data infile
 def convert_industries
   industries_txt = File.open("crp_categories.txt")
 
